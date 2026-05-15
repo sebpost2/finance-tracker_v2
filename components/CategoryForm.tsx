@@ -1,0 +1,115 @@
+"use client"
+
+import { useTransition } from "react"
+import { createCategory, updateCategory } from "@/app/actions/categories"
+import type { Category } from "@/types"
+
+const ICONS = ["💰", "🍔", "🚗", "🎮", "💊", "🛍️", "💼", "🏠", "✈️", "📚", "⚽", "🎵", "💻", "🐶", "☕"]
+const COLORS = [
+  "#6366f1", "#f97316", "#3b82f6", "#8b5cf6", "#22c55e",
+  "#ec4899", "#14b8a6", "#eab308", "#ef4444", "#06b6d4",
+  "#84cc16", "#f43f5e", "#a855f7", "#64748b", "#fb923c",
+]
+
+interface Props {
+  category?: Category
+  onClose: () => void
+}
+
+export default function CategoryForm({ category, onClose }: Props) {
+  const [isPending, startTransition] = useTransition()
+
+  function handleSubmit(formData: FormData) {
+    startTransition(async () => {
+      if (category) {
+        await updateCategory(category.id, formData)
+      } else {
+        await createCategory(formData)
+      }
+      onClose()
+    })
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-5">
+          {category ? "Edit Category" : "Add Category"}
+        </h2>
+
+        <form action={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+            <input
+              name="name"
+              type="text"
+              required
+              defaultValue={category?.name}
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+              placeholder="e.g. Food"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Icon</label>
+            <div className="flex flex-wrap gap-2">
+              {ICONS.map((icon) => (
+                <label key={icon} className="cursor-pointer">
+                  <input
+                    type="radio"
+                    name="icon"
+                    value={icon}
+                    defaultChecked={category?.icon === icon || (!category && icon === "💰")}
+                    className="sr-only peer"
+                  />
+                  <span className="text-xl w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 peer-checked:border-indigo-500 peer-checked:bg-indigo-50 hover:bg-gray-50 transition-colors">
+                    {icon}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Color</label>
+            <div className="flex flex-wrap gap-2">
+              {COLORS.map((color) => (
+                <label key={color} className="cursor-pointer">
+                  <input
+                    type="radio"
+                    name="color"
+                    value={color}
+                    defaultChecked={category?.color === color || (!category && color === "#6366f1")}
+                    className="sr-only peer"
+                  />
+                  <span
+                    className="w-7 h-7 rounded-full block border-2 border-transparent peer-checked:border-gray-900 peer-checked:scale-110 hover:scale-105 transition-transform"
+                    style={{ backgroundColor: color }}
+                  />
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isPending}
+              className="flex-1 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isPending}
+              className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-colors"
+            >
+              {isPending ? "Saving…" : category ? "Update" : "Add"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
