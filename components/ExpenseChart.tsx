@@ -9,18 +9,92 @@ interface ChartData {
   color: string
 }
 
-function prepareData(raw: ChartData[]): ChartData[] {
-  const MAX = 8
-  if (raw.length <= MAX) return raw
-  // Only group into "Others" when there are truly many categories
+interface Prepared {
+  chartData: ChartData[]
+  others: ChartData[]
+}
+
+const MIN_PCT = 5   // categories below this % of total go to Others
+const MAX_SLICES = 8 // hard cap so the chart never gets too crowded
+
+function prepareData(raw: ChartData[]): Prepared {
+  if (raw.length === 0) return { chartData: [], others: [] }
+
+  const total = raw.reduce((s, c) => s + c.value, 0)
+  if (total === 0) return { chartData: raw, others: [] }
+
   const sorted = [...raw].sort((a, b) => b.value - a.value)
-  const top = sorted.slice(0, MAX)
-  const othersValue = sorted.slice(MAX).reduce((s, c) => s + c.value, 0)
-  return [...top, { name: "Others", value: othersValue, color: "#94a3b8" }]
+
+  // Individual: significant enough AND within the hard cap
+  const individual = sorted
+    .slice(0, MAX_SLICES)
+    .filter((c) => (c.value / total) * 100 >= MIN_PCT)
+
+  // Always show at least the top 2 even if they're tiny
+  const guaranteed = sorted.slice(0, Math.min(2, sorted.length))
+  const base = individual.length >= 2 ? individual : guaranteed
+
+  const others = sorted.slice(base.length)
+
+  if (others.length === 0) return { chartData: base, others: [] }
+
+  const othersValue = others.reduce((s, c) => s + c.value, 0)
+  return {
+    chartData: [...base, { name: "Others", value: othersValue, color: "#94a3b8" }],
+    others,
+  }
+}
+
+interface TooltipPayload {
+  name: string
+  value: number
+  color: string
+}
+
+function ChartTooltip({
+  active,
+  payload,
+  others,
+}: {
+  active?: boolean
+  payload?: { payload: TooltipPayload }[]
+  others: ChartData[]
+}) {
+  if (!active || !payload?.length) return null
+  const item = payload[0].payload
+
+  if (item.name === "Others" && others.length > 0) {
+    return (
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3 shadow-lg text-xs min-w-[180px]">
+        <p className="font-semibold text-gray-700 dark:text-gray-300 mb-2">
+          Others — {formatCurrency(item.value)}
+        </p>
+        <div className="space-y-1">
+          {others.map((o) => (
+            <div key={o.name} className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
+              <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: o.color }} />
+              <span className="flex-1">{o.name}</span>
+              <span className="font-medium text-gray-700 dark:text-gray-300">
+                {formatCurrency(o.value)}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 shadow-lg text-xs">
+      <p className="font-medium text-gray-700 dark:text-gray-300">
+        {item.name}: {formatCurrency(item.value)}
+      </p>
+    </div>
+  )
 }
 
 export default function ExpenseChart({ data }: { data: ChartData[] }) {
-  const chartData = prepareData(data)
+  const { chartData, others } = prepareData(data)
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-6 h-full flex flex-col">
@@ -49,7 +123,15 @@ export default function ExpenseChart({ data }: { data: ChartData[] }) {
                   <Cell key={i} fill={entry.color} />
                 ))}
               </Pie>
-              <Tooltip formatter={(v) => formatCurrency(Number(v))} />
+              <Tooltip
+                content={(props) => (
+                  <ChartTooltip
+                    active={props.active}
+                    payload={props.payload as unknown as { payload: TooltipPayload }[]}
+                    others={others}
+                  />
+                )}
+              />
               <Legend
                 iconType="circle"
                 iconSize={8}
