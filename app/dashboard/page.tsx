@@ -5,7 +5,8 @@ import { verifySession } from "@/lib/dal"
 import { prisma } from "@/lib/prisma"
 import BalanceCards from "@/components/BalanceCards"
 import ExpenseChart from "@/components/ExpenseChart"
-import MonthlyChart from "@/components/MonthlyChart"
+import TrendChart from "@/components/TrendChart"
+import { getTrendData, type TrendPeriod } from "@/lib/trendData"
 import IncomeSources from "@/components/IncomeSources"
 import TransactionList from "@/components/TransactionList"
 import MonthFilter from "@/components/MonthFilter"
@@ -14,30 +15,23 @@ import { getMonthRange } from "@/lib/utils"
 
 export const metadata: Metadata = { title: "Dashboard | Finance Tracker" }
 
-const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
-
 interface PageProps {
-  searchParams: Promise<{ month?: string }>
+  searchParams: Promise<{ month?: string; trend?: string }>
 }
 
 export default async function DashboardPage({ searchParams }: PageProps) {
   const { userId } = await verifySession()
-  const { month } = await searchParams
+  const { month, trend = "6m" } = await searchParams
+  const trendPeriod = (["1d","1w","1m","6m","1y","all"].includes(trend) ? trend : "6m") as TrendPeriod
   const { start, end } = getMonthRange(month)
 
   // Previous month range
   const prevEnd = new Date(start.getFullYear(), start.getMonth(), 0, 23, 59, 59)
   const prevStart = new Date(prevEnd.getFullYear(), prevEnd.getMonth(), 1)
 
-  const sixMonthsAgo = new Date()
-  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5)
-  sixMonthsAgo.setDate(1)
-  sixMonthsAgo.setHours(0, 0, 0, 0)
-
   const [
     transactions,
     categories,
-    allTransactions,
     allTimeIncome,
     allTimeExpenses,
     incomeGrouped,
@@ -51,10 +45,6 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       orderBy: { date: "desc" },
     }),
     prisma.category.findMany({ where: { userId }, orderBy: { name: "asc" } }),
-    prisma.transaction.findMany({
-      where: { userId, date: { gte: sixMonthsAgo } },
-      select: { amount: true, type: true, date: true },
-    }),
     prisma.transaction.aggregate({ where: { userId, type: "INCOME" }, _sum: { amount: true } }),
     prisma.transaction.aggregate({ where: { userId, type: "EXPENSE" }, _sum: { amount: true } }),
     prisma.transaction.groupBy({
@@ -103,25 +93,10 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     .filter((c) => c.budget && c.budget > 0)
     .map((c) => ({ id: c.id, name: c.name, icon: c.icon, spent: spendMap.get(c.id) ?? 0, budget: c.budget! }))
 
-  const overBudget = alertCategories.filter((c) => c.spent >= c.budget)
-  const nearBudget = alertCategories.filter((c) => c.spent >= c.budget * 0.8 && c.spent < c.budget)
+  const overBudget = alertCategories.filter((c) => c.spent > c.budget)
+  const nearBudget = alertCategories.filter((c) => c.spent >= c.budget * 0.8 && c.spent <= c.budget)
 
-  // 6-month trend
-  const monthlyMap: Record<string, { month: string; income: number; expenses: number }> = {}
-  for (let i = 5; i >= 0; i--) {
-    const d = new Date()
-    d.setMonth(d.getMonth() - i)
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
-    monthlyMap[key] = { month: MONTH_NAMES[d.getMonth()], income: 0, expenses: 0 }
-  }
-  for (const t of allTransactions) {
-    const d = new Date(t.date)
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
-    if (monthlyMap[key]) {
-      if (t.type === "INCOME") monthlyMap[key].income += t.amount
-      else monthlyMap[key].expenses += t.amount
-    }
-  }
+  const [trendData] = await Promise.all([getTrendData(userId, trendPeriod)])
 
   const recent = transactions.slice(0, 5)
 
@@ -143,7 +118,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         prevExpenses={prevExpenses}
       />
 
-      <MonthlyChart data={Object.values(monthlyMap)} />
+      <Suspense><TrendChart data={trendData} period={trendPeriod} /></Suspense>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch" style={{ minHeight: "340px" }}>
         <ExpenseChart data={chartData} />
