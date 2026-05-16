@@ -9,13 +9,13 @@ interface ChartData {
   color: string
 }
 
-const MAX_SLICES = 6
-
 function prepareData(raw: ChartData[]): ChartData[] {
-  if (raw.length <= MAX_SLICES) return raw
+  const MAX = 8
+  if (raw.length <= MAX) return raw
+  // Only group into "Others" when there are truly many categories
   const sorted = [...raw].sort((a, b) => b.value - a.value)
-  const top = sorted.slice(0, MAX_SLICES)
-  const othersValue = sorted.slice(MAX_SLICES).reduce((s, c) => s + c.value, 0)
+  const top = sorted.slice(0, MAX)
+  const othersValue = sorted.slice(MAX).reduce((s, c) => s + c.value, 0)
   return [...top, { name: "Others", value: othersValue, color: "#94a3b8" }]
 }
 
