@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:where(.dark, .dark *));
+/* :is() preserves specificity — makes dark: classes win over bg-white etc. */
+@custom-variant dark (&:is(.dark, .dark *));
 
 :root {
   --background: #f9fafb;
@@ -17,7 +18,7 @@ body {
   color: var(--foreground);
 }
 
-/* Inputs always have explicit colors so dark mode doesn't make text invisible */
+/* Inputs always have explicit colors — dark mode doesn't make text invisible */
 input,
 select,
 textarea {

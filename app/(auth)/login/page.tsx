@@ -22,7 +22,7 @@ export default function LoginPage() {
             name="email"
             type="email"
             required
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
+            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
             placeholder="you@example.com"
           />
         </div>
@@ -32,15 +32,16 @@ export default function LoginPage() {
             name="password"
             type="password"
             required
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
+            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
             placeholder="••••••••"
           />
         </div>
 
         {state?.error && (
-          <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-            {state.error}
-          </p>
+          <div className="flex items-center gap-2 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-lg px-3 py-2.5">
+            <span className="text-base">⚠️</span>
+            <p className="text-sm font-medium">{state.error}</p>
+          </div>
         )}
 
         <button

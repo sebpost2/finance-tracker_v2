@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
-import { ThemeProvider } from "@/components/ThemeProvider"
+import { cookies } from "next/headers"
 import "./globals.css"
 
 const inter = Inter({ subsets: ["latin"] })
@@ -10,11 +10,14 @@ export const metadata: Metadata = {
   description: "Track your income and expenses",
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const cookieStore = await cookies()
+  const theme = cookieStore.get("theme")?.value ?? "light"
+
   return (
-    <html lang="en" className="h-full" suppressHydrationWarning>
+    <html lang="en" className={`h-full ${theme === "dark" ? "dark" : ""}`} suppressHydrationWarning>
       <body className={`${inter.className} h-full bg-gray-50 dark:bg-gray-950 antialiased`}>
-        <ThemeProvider>{children}</ThemeProvider>
+        {children}
       </body>
     </html>
   )
