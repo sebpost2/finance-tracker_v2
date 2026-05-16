@@ -1,6 +1,7 @@
 "use client"
 
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts"
+import { formatCurrency } from "@/lib/utils"
 
 interface ChartData {
   name: string
@@ -10,8 +11,8 @@ interface ChartData {
 
 export default function ExpenseChart({ data }: { data: ChartData[] }) {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 h-full flex flex-col">
-      <h2 className="text-base font-semibold text-gray-900 mb-4 flex-shrink-0">
+    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-6 h-full flex flex-col">
+      <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-4 flex-shrink-0">
         Expenses by Category
       </h2>
 
@@ -36,14 +37,7 @@ export default function ExpenseChart({ data }: { data: ChartData[] }) {
                   <Cell key={i} fill={entry.color} />
                 ))}
               </Pie>
-              <Tooltip
-                formatter={(value) =>
-                  new Intl.NumberFormat("en-US", {
-                    style: "currency",
-                    currency: "USD",
-                  }).format(Number(value))
-                }
-              />
+              <Tooltip formatter={(v) => formatCurrency(Number(v))} />
               <Legend />
             </PieChart>
           </ResponsiveContainer>
