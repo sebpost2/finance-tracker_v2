@@ -7,7 +7,8 @@ on:
     branches: [main, master]
 
 jobs:
-  ci:
+  unit:
+    name: Type check, lint & unit tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -26,5 +27,29 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Test
+      - name: Unit tests
         run: npm test -- --run
+
+  e2e:
+    name: Playwright E2E
+    runs-on: ubuntu-latest
+    # Only run E2E when BASE_URL secret is configured
+    if: vars.RUN_E2E == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        run: npx playwright test
+        env:
+          BASE_URL: ${{ secrets.VERCEL_URL }}

@@ -1,7 +1,10 @@
+import type { Metadata } from "next"
 import { verifySession } from "@/lib/dal"
 import { prisma } from "@/lib/prisma"
 import ProfileForm from "@/components/ProfileForm"
 import PasswordForm from "@/components/PasswordForm"
+
+export const metadata: Metadata = { title: "Settings | Finance Tracker" }
 
 export default async function SettingsPage() {
   const { userId } = await verifySession()

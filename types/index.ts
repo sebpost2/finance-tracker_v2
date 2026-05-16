@@ -3,6 +3,11 @@ export interface Category {
   name: string
   color: string
   icon: string
+  budget?: number | null
+}
+
+export interface CategoryWithSpending extends Category {
+  spent: number
 }
 
 export interface Transaction {

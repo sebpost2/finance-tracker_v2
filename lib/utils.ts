@@ -6,11 +6,23 @@ export function formatCurrency(amount: number): string {
 }
 
 export function formatDate(date: Date | string): string {
+  const d = new Date(date)
+  const today = new Date()
+
+  if (d.toDateString() === today.toDateString()) return "Today"
+
+  const yesterday = new Date(today)
+  yesterday.setDate(yesterday.getDate() - 1)
+  if (d.toDateString() === yesterday.toDateString()) return "Yesterday"
+
+  const diffDays = Math.floor((today.getTime() - d.getTime()) / (1000 * 60 * 60 * 24))
+  if (diffDays > 0 && diffDays < 7) return `${diffDays} days ago`
+
   return new Intl.DateTimeFormat("en-US", {
     day: "numeric",
     month: "short",
     year: "numeric",
-  }).format(new Date(date))
+  }).format(d)
 }
 
 export function formatMonth(date: Date): string {

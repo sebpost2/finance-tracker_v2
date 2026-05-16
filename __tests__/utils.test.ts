@@ -15,16 +15,27 @@ describe("formatCurrency", () => {
   })
 })
 
-describe("formatDate", () => {
-  it("includes the year in the output", () => {
-    // Use local-time constructor to avoid UTC timezone shift
-    const result = formatDate(new Date(2026, 0, 15)) // Jan 15 local time
-    expect(result).toContain("2026")
+describe("formatDate — relative dates", () => {
+  it("returns 'Today' for today", () => {
+    expect(formatDate(new Date())).toBe("Today")
   })
 
-  it("includes the month name", () => {
-    const result = formatDate(new Date(2026, 4, 1)) // May 1 local time
-    expect(result).toContain("May")
+  it("returns 'Yesterday' for yesterday", () => {
+    const yesterday = new Date()
+    yesterday.setDate(yesterday.getDate() - 1)
+    expect(formatDate(yesterday)).toBe("Yesterday")
+  })
+
+  it("returns 'X days ago' for recent dates", () => {
+    const threeDaysAgo = new Date()
+    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3)
+    expect(formatDate(threeDaysAgo)).toBe("3 days ago")
+  })
+
+  it("returns full date for dates older than 7 days", () => {
+    const result = formatDate(new Date(2020, 0, 1))
+    expect(result).toContain("2020")
+    expect(result).toContain("Jan")
   })
 })
 
@@ -32,7 +43,7 @@ describe("getMonthRange", () => {
   it("returns the correct month for a given param", () => {
     const { start, end } = getMonthRange("2026-03")
     expect(start.getFullYear()).toBe(2026)
-    expect(start.getMonth()).toBe(2) // March (0-indexed)
+    expect(start.getMonth()).toBe(2)
     expect(start.getDate()).toBe(1)
     expect(end.getMonth()).toBe(2)
   })
