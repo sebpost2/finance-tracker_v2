@@ -7,6 +7,7 @@ const links = [
   { href: "/dashboard", label: "Dashboard", icon: "📊" },
   { href: "/dashboard/transactions", label: "Transactions", icon: "💳" },
   { href: "/dashboard/categories", label: "Categories", icon: "🏷️" },
+  { href: "/dashboard/settings", label: "Settings", icon: "⚙️" },
 ]
 
 export default function BottomNav() {
@@ -22,9 +23,7 @@ export default function BottomNav() {
               key={href}
               href={href}
               className={`flex-1 flex flex-col items-center py-2.5 gap-0.5 text-xs font-medium transition-colors ${
-                isActive
-                  ? "text-indigo-600"
-                  : "text-gray-500 dark:text-gray-400"
+                isActive ? "text-indigo-600" : "text-gray-500 dark:text-gray-400"
               }`}
             >
               <span className="text-lg leading-none">{icon}</span>

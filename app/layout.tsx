@@ -1,6 +1,8 @@
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import { cookies } from "next/headers"
+import { ToastProvider } from "@/contexts/ToastContext"
+import Toaster from "@/components/Toaster"
 import "./globals.css"
 
 const inter = Inter({ subsets: ["latin"] })
@@ -17,7 +19,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en" className={`h-full ${theme === "dark" ? "dark" : ""}`} suppressHydrationWarning>
       <body className={`${inter.className} h-full bg-gray-50 dark:bg-gray-950 antialiased`}>
-        {children}
+        <ToastProvider>
+          {children}
+          <Toaster />
+        </ToastProvider>
       </body>
     </html>
   )

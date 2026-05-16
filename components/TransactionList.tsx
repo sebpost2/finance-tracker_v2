@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react"
 import { deleteTransaction } from "@/app/actions/transactions"
+import { useToast } from "@/contexts/ToastContext"
 import TransactionForm from "./TransactionForm"
 import { formatCurrency, formatDate } from "@/lib/utils"
 import type { Category, Transaction } from "@/types"
@@ -16,6 +17,7 @@ export default function TransactionList({ transactions, categories, showAdd = tr
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<Transaction | undefined>()
   const [isPending, startTransition] = useTransition()
+  const { showToast } = useToast()
 
   function openEdit(t: Transaction) {
     setEditing(t)
@@ -29,7 +31,10 @@ export default function TransactionList({ transactions, categories, showAdd = tr
 
   function handleDelete(id: string) {
     if (!confirm("Delete this transaction?")) return
-    startTransition(() => deleteTransaction(id))
+    startTransition(async () => {
+      await deleteTransaction(id)
+      showToast("Transaction deleted", "info")
+    })
   }
 
   return (
@@ -52,7 +57,7 @@ export default function TransactionList({ transactions, categories, showAdd = tr
         </div>
 
         {transactions.length === 0 ? (
-          <div className="flex-1 flex items-center justify-center text-gray-400 text-sm">
+          <div className="flex-1 flex items-center justify-center text-gray-400 dark:text-gray-500 text-sm">
             No transactions yet
           </div>
         ) : (
@@ -71,7 +76,7 @@ export default function TransactionList({ transactions, categories, showAdd = tr
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-gray-400 mt-0.5">{formatDate(t.date)}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{formatDate(t.date)}</p>
                 </div>
 
                 <p className={`text-sm font-semibold flex-shrink-0 ${t.type === "INCOME" ? "text-green-600" : "text-red-500"}`}>

@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react"
 import { deleteCategory } from "@/app/actions/categories"
+import { useToast } from "@/contexts/ToastContext"
 import CategoryForm from "./CategoryForm"
 import type { Category } from "@/types"
 
@@ -9,6 +10,7 @@ export default function CategoryList({ categories }: { categories: Category[] })
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<Category | undefined>()
   const [isPending, startTransition] = useTransition()
+  const { showToast } = useToast()
 
   function openEdit(c: Category) {
     setEditing(c)
@@ -22,7 +24,10 @@ export default function CategoryList({ categories }: { categories: Category[] })
 
   function handleDelete(id: string) {
     if (!confirm("Delete this category? Transactions using it will be uncategorized.")) return
-    startTransition(() => deleteCategory(id))
+    startTransition(async () => {
+      await deleteCategory(id)
+      showToast("Category deleted", "info")
+    })
   }
 
   return (
@@ -47,12 +52,9 @@ export default function CategoryList({ categories }: { categories: Category[] })
             {categories.map((c) => (
               <div
                 key={c.id}
-                className="flex items-center gap-3 p-4 rounded-xl border border-gray-100 dark:border-gray-800 hover:border-gray-200 dark:hover:border-gray-700 bg-white dark:bg-gray-900 transition-colors"
+                className="flex items-center gap-3 p-4 rounded-xl border border-gray-100 dark:border-gray-800 hover:border-gray-200 dark:hover:border-gray-700 bg-gray-50 dark:bg-gray-800/50 transition-colors"
               >
-                <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
-                  style={{ backgroundColor: c.color + "20" }}
-                >
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0" style={{ backgroundColor: c.color + "20" }}>
                   {c.icon}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -62,20 +64,8 @@ export default function CategoryList({ categories }: { categories: Category[] })
                   </div>
                 </div>
                 <div className="flex items-center gap-1 flex-shrink-0">
-                  <button
-                    onClick={() => openEdit(c)}
-                    className="p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-                    aria-label="Edit"
-                  >
-                    ✏️
-                  </button>
-                  <button
-                    onClick={() => handleDelete(c.id)}
-                    className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                    aria-label="Delete"
-                  >
-                    🗑️
-                  </button>
+                  <button onClick={() => openEdit(c)} className="p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors" aria-label="Edit">✏️</button>
+                  <button onClick={() => handleDelete(c.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors" aria-label="Delete">🗑️</button>
                 </div>
               </div>
             ))}
