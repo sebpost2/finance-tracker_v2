@@ -2,7 +2,7 @@
 
 A full-stack personal finance application to track income and expenses, visualize spending by category, and manage monthly budgets.
 
-**[Live Demo](https://YOUR_VERCEL_URL)** · [Report Bug](https://github.com/sebpost2/finance-tracker_v2/issues)
+**[Live Demo](https://finance-tracker-v2.vercel.app)** · [Report Bug](https://github.com/sebpost2/finance-tracker_v2/issues)
 
 ---
 
