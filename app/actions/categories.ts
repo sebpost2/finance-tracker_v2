@@ -2,35 +2,42 @@
 
 import { prisma } from "@/lib/prisma"
 import { verifySession } from "@/lib/dal"
+import { CategorySchema } from "@/lib/schemas"
 import { revalidatePath } from "next/cache"
 
-function parseCategoryForm(formData: FormData) {
-  const name = (formData.get("name") as string)?.trim()
-  const color = formData.get("color") as string
-  const icon = formData.get("icon") as string
-  const budgetStr = (formData.get("budget") as string)?.trim()
-  const budget = budgetStr ? parseFloat(budgetStr) : null
-
-  if (!name) throw new Error("Name is required")
-  if (!color?.startsWith("#")) throw new Error("Invalid color")
-  if (!icon) throw new Error("Icon is required")
-  if (budget !== null && (isNaN(budget) || budget <= 0)) throw new Error("Budget must be a positive number")
-
-  return { name, color, icon, budget }
+function revalidate() {
+  revalidatePath("/dashboard/categories")
+  revalidatePath("/dashboard")
 }
 
 export async function createCategory(formData: FormData) {
   const { userId } = await verifySession()
-  const data = parseCategoryForm(formData)
-  await prisma.category.create({ data: { ...data, userId } })
-  revalidatePath("/dashboard/categories")
+
+  const result = CategorySchema.safeParse({
+    name: formData.get("name"),
+    color: formData.get("color"),
+    icon: formData.get("icon"),
+    budget: formData.get("budget") || null,
+  })
+  if (!result.success) throw new Error(result.error.issues[0].message)
+
+  await prisma.category.create({ data: { ...result.data, userId } })
+  revalidate()
 }
 
 export async function updateCategory(id: string, formData: FormData) {
   const { userId } = await verifySession()
-  const data = parseCategoryForm(formData)
-  await prisma.category.update({ where: { id, userId }, data })
-  revalidatePath("/dashboard/categories")
+
+  const result = CategorySchema.safeParse({
+    name: formData.get("name"),
+    color: formData.get("color"),
+    icon: formData.get("icon"),
+    budget: formData.get("budget") || null,
+  })
+  if (!result.success) throw new Error(result.error.issues[0].message)
+
+  await prisma.category.update({ where: { id, userId }, data: result.data })
+  revalidate()
 }
 
 export async function deleteCategory(id: string) {

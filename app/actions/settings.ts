@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma"
 import { verifySession } from "@/lib/dal"
+import { UpdateProfileSchema, ChangePasswordSchema } from "@/lib/schemas"
 import { revalidatePath } from "next/cache"
 import bcrypt from "bcryptjs"
 
@@ -12,14 +13,12 @@ export async function updateProfile(
   formData: FormData
 ): Promise<SettingsState> {
   const { userId } = await verifySession()
-  const name = (formData.get("name") as string)?.trim()
 
-  if (!name) return { error: "Name is required" }
-  if (name.length < 2) return { error: "Name must be at least 2 characters" }
+  const result = UpdateProfileSchema.safeParse({ name: formData.get("name") })
+  if (!result.success) return { error: result.error.issues[0].message }
 
-  await prisma.user.update({ where: { id: userId }, data: { name } })
+  await prisma.user.update({ where: { id: userId }, data: { name: result.data.name } })
   revalidatePath("/dashboard")
-
   return { success: true }
 }
 
@@ -28,22 +27,21 @@ export async function changePassword(
   formData: FormData
 ): Promise<SettingsState> {
   const { userId } = await verifySession()
-  const current = formData.get("currentPassword") as string
-  const next = formData.get("newPassword") as string
-  const confirm = formData.get("confirmPassword") as string
 
-  if (!current || !next || !confirm) return { error: "All fields are required" }
-  if (next.length < 6) return { error: "New password must be at least 6 characters" }
-  if (next !== confirm) return { error: "New passwords do not match" }
+  const result = ChangePasswordSchema.safeParse({
+    currentPassword: formData.get("currentPassword"),
+    newPassword: formData.get("newPassword"),
+    confirmPassword: formData.get("confirmPassword"),
+  })
+  if (!result.success) return { error: result.error.issues[0].message }
 
   const user = await prisma.user.findUnique({ where: { id: userId } })
   if (!user) return { error: "User not found" }
 
-  const isValid = await bcrypt.compare(current, user.password)
+  const isValid = await bcrypt.compare(result.data.currentPassword, user.password)
   if (!isValid) return { error: "Current password is incorrect" }
 
-  const hashed = await bcrypt.hash(next, 10)
+  const hashed = await bcrypt.hash(result.data.newPassword, 10)
   await prisma.user.update({ where: { id: userId }, data: { password: hashed } })
-
   return { success: true }
 }

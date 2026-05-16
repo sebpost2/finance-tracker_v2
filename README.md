@@ -2,7 +2,9 @@
 
 A full-stack personal finance application to track income and expenses, visualize spending by category, and manage monthly budgets.
 
-**[Live Demo](https://finance-tracker-v2.vercel.app)** · [Report Bug](https://github.com/sebpost2/finance-tracker_v2/issues)
+**[Live Demo](https://finance-tracker-v2-sebpost2s-projects.vercel.app/login)** · [Report Bug](https://github.com/sebpost2/finance-tracker_v2/issues)
+
+> Click **"Try demo"** on the login page — no account needed.
 
 ---
 
@@ -24,22 +26,30 @@ A full-stack personal finance application to track income and expenses, visualiz
 | Auth | Custom JWT (jose) — stateless sessions via HttpOnly cookies |
 | Charts | Recharts |
 | Deploy | Vercel |
+| Testing | Vitest (unit) + Playwright (E2E) |
 
 ## Features
 
-- **Authentication** — Register and login with email/password. Sessions stored in encrypted HttpOnly cookies with no third-party auth dependency.
-- **Dashboard** — Monthly balance overview with income, expenses, and a donut chart breakdown by category.
-- **Transactions** — Full CRUD: add, edit, and delete transactions with amount, description, category, type, and date.
-- **Categories** — Custom categories with color and emoji icon. Deletions gracefully uncategorize related transactions.
-- **Month filter** — Navigate between months to view historical data.
-- **Route protection** — Server-side auth guard via Next.js 16 `proxy.ts` (the renamed middleware).
+- **Demo mode** — One-click demo with 3 months of realistic pre-seeded data. No account required, fully isolated per visitor.
+- **Net Savings** — Prominent all-time accumulated balance, separate from monthly stats.
+- **Dashboard** — Monthly balance, income vs expenses trend chart (6 months), expense donut chart with percentages, and income breakdown by source.
+- **Transactions** — Full CRUD with search, CSV export, and optimistic UI updates (React 19 `useOptimistic`).
+- **Categories** — Custom categories with color, emoji, and optional monthly budget limits with progress bars. Toggle between Expense and Income views.
+- **Month filter** — Navigate between months; all charts and stats update server-side.
+- **Dark mode** — Cookie-based theme persisted server-side (no flash on load). Defaults to dark.
+- **Toasts** — Feedback after every mutation (add, edit, delete).
+- **Settings** — Update display name and change password.
+- **Route protection** — Server-side auth guard via Next.js 16 `proxy.ts`.
+- **Security headers** — X-Frame-Options, HSTS, Referrer-Policy, Permissions-Policy.
 
 ## Architecture Highlights
 
-- **Server Actions** for all mutations — no separate REST API layer needed.
+- **Server Actions** for all mutations — no REST API layer.
 - **Data Access Layer** (`lib/dal.ts`) with React `cache()` to deduplicate session reads per request.
-- **`server-only`** enforced on session and DAL modules to prevent accidental client-side imports.
-- **Input validation** on all server actions before hitting the database.
+- **`server-only`** on session and DAL modules to prevent accidental client-side imports.
+- **Input validation** on all server actions before touching the database.
+- **Cookie-based dark mode** — theme class applied on the server render, zero flash of unstyled content.
+- **`useOptimistic`** (React 19) — deleting a transaction removes it from the UI instantly.
 
 ## Running Locally
 
@@ -56,20 +66,18 @@ cd finance-tracker_v2
 npm install
 ```
 
-Create a `.env.local` file:
+Create `.env.local`:
 
 ```env
 DATABASE_URL="postgresql://postgres.[project-ref]:[password]@aws-1-[region].pooler.supabase.com:5432/postgres"
 SESSION_SECRET="your-random-secret-minimum-32-characters"
 ```
 
-Run the database migrations (first time only):
+Initialize the database (Supabase SQL Editor or `prisma db push`):
 
 ```bash
 npx prisma db push
 ```
-
-Start the development server:
 
 ```bash
 npm run dev
@@ -77,29 +85,39 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
+## Testing
+
+```bash
+npm test              # Vitest unit tests (13 tests)
+npm run test:e2e      # Playwright E2E against BASE_URL
+```
+
 ## Environment Variables
 
 | Variable | Description |
 |---|---|
-| `DATABASE_URL` | Supabase PostgreSQL connection string (Session Pooler, port 5432) |
-| `SESSION_SECRET` | Random string (min 32 chars) for JWT signing |
+| `DATABASE_URL` | Supabase PostgreSQL — Session Pooler, port 5432 |
+| `SESSION_SECRET` | Random string ≥ 32 chars for JWT signing |
 
-Generate a secret: `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`
+Generate: `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`
 
 ## Project Structure
 
 ```
 ├── app/
-│   ├── (auth)/          # Login and register pages
-│   ├── actions/         # Server Actions (auth, transactions, categories)
-│   └── dashboard/       # Protected dashboard routes
-├── components/          # UI components (forms, charts, lists)
+│   ├── (auth)/          # Login, register
+│   ├── actions/         # Server Actions — auth, transactions, categories, settings, demo
+│   └── dashboard/       # Protected routes (dashboard, transactions, categories, settings)
+├── components/          # UI — forms, charts, lists, toasts, navigation
+├── contexts/            # Toast context
+├── e2e/                 # Playwright E2E tests
 ├── lib/
 │   ├── dal.ts           # Data Access Layer with session verification
-│   ├── prisma.ts        # Prisma client singleton
-│   └── session.ts       # JWT session management
+│   ├── prisma.ts        # Prisma client singleton (pg adapter)
+│   ├── session.ts       # JWT session management (jose)
+│   └── utils.ts         # Shared formatters and helpers
 ├── prisma/
-│   └── schema.prisma    # Database schema
+│   └── schema.prisma    # Database schema (User, Category, Transaction)
 ├── proxy.ts             # Route protection (Next.js 16 middleware)
 └── types/               # Shared TypeScript interfaces
 ```
