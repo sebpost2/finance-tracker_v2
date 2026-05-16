@@ -14,33 +14,23 @@ interface Prepared {
   others: ChartData[]
 }
 
-const MIN_PCT = 5   // categories below this % of total go to Others
-const MAX_SLICES = 8 // hard cap so the chart never gets too crowded
+const MAX_SLICES = 8 // show all individually up to 8; only group beyond that
 
 function prepareData(raw: ChartData[]): Prepared {
   if (raw.length === 0) return { chartData: [], others: [] }
 
-  const total = raw.reduce((s, c) => s + c.value, 0)
-  if (total === 0) return { chartData: raw, others: [] }
-
   const sorted = [...raw].sort((a, b) => b.value - a.value)
 
-  // Individual: significant enough AND within the hard cap
-  const individual = sorted
-    .slice(0, MAX_SLICES)
-    .filter((c) => (c.value / total) * 100 >= MIN_PCT)
+  if (sorted.length <= MAX_SLICES) {
+    return { chartData: sorted, others: [] }
+  }
 
-  // Always show at least the top 2 even if they're tiny
-  const guaranteed = sorted.slice(0, Math.min(2, sorted.length))
-  const base = individual.length >= 2 ? individual : guaranteed
-
-  const others = sorted.slice(base.length)
-
-  if (others.length === 0) return { chartData: base, others: [] }
-
+  const top = sorted.slice(0, MAX_SLICES)
+  const others = sorted.slice(MAX_SLICES)
   const othersValue = others.reduce((s, c) => s + c.value, 0)
+
   return {
-    chartData: [...base, { name: "Others", value: othersValue, color: "#94a3b8" }],
+    chartData: [...top, { name: "Others", value: othersValue, color: "#94a3b8" }],
     others,
   }
 }
