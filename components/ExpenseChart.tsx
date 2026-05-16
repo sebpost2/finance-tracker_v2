@@ -9,7 +9,19 @@ interface ChartData {
   color: string
 }
 
+const MAX_SLICES = 6
+
+function prepareData(raw: ChartData[]): ChartData[] {
+  if (raw.length <= MAX_SLICES) return raw
+  const sorted = [...raw].sort((a, b) => b.value - a.value)
+  const top = sorted.slice(0, MAX_SLICES)
+  const othersValue = sorted.slice(MAX_SLICES).reduce((s, c) => s + c.value, 0)
+  return [...top, { name: "Others", value: othersValue, color: "#94a3b8" }]
+}
+
 export default function ExpenseChart({ data }: { data: ChartData[] }) {
+  const chartData = prepareData(data)
+
   return (
     <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-6 h-full flex flex-col">
       <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-4 flex-shrink-0">
@@ -25,20 +37,26 @@ export default function ExpenseChart({ data }: { data: ChartData[] }) {
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
-                data={data}
+                data={chartData}
                 cx="50%"
                 cy="50%"
-                innerRadius="35%"
-                outerRadius="55%"
-                paddingAngle={3}
+                innerRadius="30%"
+                outerRadius="52%"
+                paddingAngle={2}
                 dataKey="value"
               >
-                {data.map((entry, i) => (
+                {chartData.map((entry, i) => (
                   <Cell key={i} fill={entry.color} />
                 ))}
               </Pie>
               <Tooltip formatter={(v) => formatCurrency(Number(v))} />
-              <Legend />
+              <Legend
+                iconType="circle"
+                iconSize={8}
+                formatter={(value) => (
+                  <span className="text-xs text-gray-600 dark:text-gray-400">{value}</span>
+                )}
+              />
             </PieChart>
           </ResponsiveContainer>
         </div>
