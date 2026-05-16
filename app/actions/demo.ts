@@ -13,7 +13,7 @@ const CATEGORY_SEEDS = [
   { name: "Entertainment", color: "#8b5cf6", icon: "🎮", budget: 150  },
   { name: "Health",        color: "#22c55e", icon: "💊", budget: 120  },
   { name: "Shopping",      color: "#ec4899", icon: "🛍️", budget: 300  },
-  { name: "Utilities",     color: "#0ea5e9", icon: "⚡", budget: 160  },
+  { name: "Utilities",     color: "#eab308", icon: "⚡", budget: 160  },
 ]
 
 type TxnType = "INCOME" | "EXPENSE"
