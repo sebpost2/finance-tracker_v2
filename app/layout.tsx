@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies()
-  const theme = cookieStore.get("theme")?.value ?? "light"
+  const theme = cookieStore.get("theme")?.value ?? "dark"
 
   return (
     <html lang="en" className={`h-full ${theme === "dark" ? "dark" : ""}`} suppressHydrationWarning>
