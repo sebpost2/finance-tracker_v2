@@ -7,6 +7,7 @@ const links = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/dashboard/transactions", label: "Transactions" },
   { href: "/dashboard/categories", label: "Categories" },
+  { href: "/dashboard/settings", label: "Settings" },
 ]
 
 export default function NavLinks() {

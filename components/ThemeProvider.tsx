@@ -1,11 +1,5 @@
-"use client"
-
-import { ThemeProvider as NextThemesProvider } from "next-themes"
-
+// No longer needed — theme is managed via cookie + server-side class on <html>
+// Kept as empty export to avoid breaking any imports
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  return (
-    <NextThemesProvider attribute="class" defaultTheme="system" enableSystem>
-      {children}
-    </NextThemesProvider>
-  )
+  return <>{children}</>
 }

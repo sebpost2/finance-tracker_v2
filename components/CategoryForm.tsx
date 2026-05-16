@@ -2,6 +2,7 @@
 
 import { useTransition } from "react"
 import { createCategory, updateCategory } from "@/app/actions/categories"
+import { useToast } from "@/contexts/ToastContext"
 import type { Category } from "@/types"
 
 const ICONS = ["💰", "🍔", "🚗", "🎮", "💊", "🛍️", "💼", "🏠", "✈️", "📚", "⚽", "🎵", "💻", "🐶", "☕"]
@@ -18,13 +19,16 @@ interface Props {
 
 export default function CategoryForm({ category, onClose }: Props) {
   const [isPending, startTransition] = useTransition()
+  const { showToast } = useToast()
 
   function handleSubmit(formData: FormData) {
     startTransition(async () => {
       if (category) {
         await updateCategory(category.id, formData)
+        showToast("Category updated")
       } else {
         await createCategory(formData)
+        showToast("Category added")
       }
       onClose()
     })
@@ -32,14 +36,14 @@ export default function CategoryForm({ category, onClose }: Props) {
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-5">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-5">
           {category ? "Edit Category" : "Add Category"}
         </h2>
 
         <form action={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
             <input
               name="name"
               type="text"
@@ -51,18 +55,27 @@ export default function CategoryForm({ category, onClose }: Props) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Icon</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Monthly budget <span className="text-gray-400 font-normal">(optional)</span>
+            </label>
+            <input
+              name="budget"
+              type="number"
+              step="0.01"
+              min="0.01"
+              defaultValue={category?.budget ?? ""}
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+              placeholder="e.g. 500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Icon</label>
             <div className="flex flex-wrap gap-2">
               {ICONS.map((icon) => (
                 <label key={icon} className="cursor-pointer">
-                  <input
-                    type="radio"
-                    name="icon"
-                    value={icon}
-                    defaultChecked={category?.icon === icon || (!category && icon === "💰")}
-                    className="sr-only peer"
-                  />
-                  <span className="text-xl w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 peer-checked:border-indigo-500 peer-checked:bg-indigo-50 hover:bg-gray-50 transition-colors">
+                  <input type="radio" name="icon" value={icon} defaultChecked={category?.icon === icon || (!category && icon === "💰")} className="sr-only peer" />
+                  <span className="text-xl w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 peer-checked:border-indigo-500 peer-checked:bg-indigo-50 dark:peer-checked:bg-indigo-950 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                     {icon}
                   </span>
                 </label>
@@ -71,40 +84,20 @@ export default function CategoryForm({ category, onClose }: Props) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Color</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Color</label>
             <div className="flex flex-wrap gap-2">
               {COLORS.map((color) => (
                 <label key={color} className="cursor-pointer">
-                  <input
-                    type="radio"
-                    name="color"
-                    value={color}
-                    defaultChecked={category?.color === color || (!category && color === "#6366f1")}
-                    className="sr-only peer"
-                  />
-                  <span
-                    className="w-7 h-7 rounded-full block border-2 border-transparent peer-checked:border-gray-900 peer-checked:scale-110 hover:scale-105 transition-transform"
-                    style={{ backgroundColor: color }}
-                  />
+                  <input type="radio" name="color" value={color} defaultChecked={category?.color === color || (!category && color === "#6366f1")} className="sr-only peer" />
+                  <span className="w-7 h-7 rounded-full block border-2 border-transparent peer-checked:border-gray-900 dark:peer-checked:border-white peer-checked:scale-110 hover:scale-105 transition-transform" style={{ backgroundColor: color }} />
                 </label>
               ))}
             </div>
           </div>
 
           <div className="flex gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={isPending}
-              className="flex-1 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isPending}
-              className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-colors"
-            >
+            <button type="button" onClick={onClose} disabled={isPending} className="flex-1 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50">Cancel</button>
+            <button type="submit" disabled={isPending} className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-colors">
               {isPending ? "Saving…" : category ? "Update" : "Add"}
             </button>
           </div>

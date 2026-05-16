@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { Suspense } from "react"
 import { verifySession } from "@/lib/dal"
 import { prisma } from "@/lib/prisma"
@@ -6,6 +7,8 @@ import MonthFilter from "@/components/MonthFilter"
 import SearchInput from "@/components/SearchInput"
 import ExportButton from "@/components/ExportButton"
 import { getMonthRange } from "@/lib/utils"
+
+export const metadata: Metadata = { title: "Transactions | Finance Tracker" }
 
 interface PageProps {
   searchParams: Promise<{ month?: string; q?: string }>
@@ -36,7 +39,6 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
 
   return (
     <div className="space-y-4">
-      {/* Header — stacks vertically on mobile */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Transactions</h1>
         <div className="flex items-center gap-2">
@@ -44,11 +46,7 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
           <Suspense><MonthFilter /></Suspense>
         </div>
       </div>
-
-      <Suspense>
-        <SearchInput />
-      </Suspense>
-
+      <Suspense><SearchInput /></Suspense>
       <TransactionList transactions={transactions} categories={categories} showAdd />
     </div>
   )
