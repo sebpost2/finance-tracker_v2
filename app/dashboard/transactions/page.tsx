@@ -21,14 +21,12 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
       where: {
         userId,
         date: { gte: start, lte: end },
-        ...(q
-          ? {
-              OR: [
-                { description: { contains: q, mode: "insensitive" } },
-                { category: { name: { contains: q, mode: "insensitive" } } },
-              ],
-            }
-          : {}),
+        ...(q ? {
+          OR: [
+            { description: { contains: q, mode: "insensitive" } },
+            { category: { name: { contains: q, mode: "insensitive" } } },
+          ],
+        } : {}),
       },
       include: { category: true },
       orderBy: { date: "desc" },
@@ -38,9 +36,10 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      {/* Header — stacks vertically on mobile */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Transactions</h1>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <Suspense><ExportButton /></Suspense>
           <Suspense><MonthFilter /></Suspense>
         </div>

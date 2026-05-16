@@ -20,7 +20,6 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   const { month } = await searchParams
   const { start, end } = getMonthRange(month)
 
-  // 6-month window for trend chart
   const sixMonthsAgo = new Date()
   sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5)
   sixMonthsAgo.setDate(1)
@@ -50,7 +49,6 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     }))
     .filter((c) => c.value > 0)
 
-  // Build 6-month trend data
   const monthlyMap: Record<string, { month: string; income: number; expenses: number }> = {}
   for (let i = 5; i >= 0; i--) {
     const d = new Date()
@@ -67,21 +65,21 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     }
   }
   const trendData = Object.values(monthlyMap)
-
   const recent = transactions.slice(0, 5)
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-5">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
-        <Suspense><MonthFilter /></Suspense>
+        <Suspense>
+          <MonthFilter />
+        </Suspense>
       </div>
 
       <BalanceCards balance={income - expenses} income={income} expenses={expenses} />
-
       <MonthlyChart data={trendData} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch" style={{ minHeight: "380px" }}>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch" style={{ minHeight: "360px" }}>
         <ExpenseChart data={chartData} />
         <div className="flex flex-col gap-3 min-h-0">
           <div className="flex-1 min-h-0">
