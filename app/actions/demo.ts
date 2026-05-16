@@ -7,6 +7,7 @@ import { redirect } from "next/navigation"
 
 const CATEGORY_SEEDS = [
   { name: "Salary",        color: "#14b8a6", icon: "💼" },
+  { name: "Freelance",     color: "#6366f1", icon: "💻" },
   { name: "Rent",          color: "#64748b", icon: "🏠", budget: 1200 },
   { name: "Food",          color: "#f97316", icon: "🍔", budget: 450  },
   { name: "Transport",     color: "#3b82f6", icon: "🚗", budget: 180  },
@@ -68,7 +69,7 @@ async function seedDemoData(userId: string) {
   txns.push(
     { amount: 4500,   description: "Monthly salary",         type: "INCOME",  categoryId: c["Salary"],        userId, date: d1(1)  },
     { amount: 1200,   description: "Rent — March",           type: "EXPENSE", categoryId: c["Rent"],          userId, date: d1(1)  },
-    { amount: 800,    description: "Freelance — web project", type: "INCOME", categoryId: null,               userId, date: d1(3)  },
+    { amount: 800,    description: "Freelance — web project", type: "INCOME", categoryId: c["Freelance"],      userId, date: d1(3)  },
     { amount: 88,     description: "Electric + internet",    type: "EXPENSE", categoryId: c["Utilities"],     userId, date: d1(4)  },
     { amount: 38,     description: "Gym membership",         type: "EXPENSE", categoryId: c["Health"],        userId, date: d1(5)  },
     { amount: 145,    description: "Concert tickets",        type: "EXPENSE", categoryId: c["Entertainment"], userId, date: d1(6)  },
@@ -109,7 +110,7 @@ async function seedDemoData(userId: string) {
     ...(today > 15 ? [
       { amount: 29.99,  description: "Spotify + iCloud",      type: "EXPENSE" as TxnType, categoryId: c["Entertainment"], userId, date: d2(16) },
       { amount: 35,     description: "Dinner out",            type: "EXPENSE" as TxnType, categoryId: c["Food"],          userId, date: d2(17) },
-      { amount: 250,    description: "Side project income",   type: "INCOME"  as TxnType, categoryId: null,               userId, date: d2(18) },
+      { amount: 250,    description: "Side project income",   type: "INCOME"  as TxnType, categoryId: c["Freelance"],      userId, date: d2(18) },
     ] : []),
     ...(today > 20 ? [
       { amount: 68.4,   description: "Grocery run",           type: "EXPENSE" as TxnType, categoryId: c["Food"],          userId, date: d2(21) },
