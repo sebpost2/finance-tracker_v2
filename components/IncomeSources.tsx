@@ -1,7 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts"
+import {
+  BarChart, Bar, XAxis, YAxis, Cell, LabelList,
+  PieChart, Pie, Tooltip, Legend, ResponsiveContainer,
+} from "recharts"
 import { formatCurrency } from "@/lib/utils"
 
 export interface IncomeSource {
@@ -12,35 +15,52 @@ export interface IncomeSource {
   amount: number
 }
 
-function BarView({ sources, total }: { sources: IncomeSource[]; total: number }) {
-  const max = Math.max(...sources.map((s) => s.amount), 1)
+function HBarView({ sources, total }: { sources: IncomeSource[]; total: number }) {
+  const barHeight = 36
+  const height = Math.max(120, sources.length * barHeight + 20)
+
   return (
-    <div className="space-y-4">
-      {sources.map((s) => {
-        const pct = Math.round((s.amount / total) * 100)
-        return (
-          <div key={s.id} className="group relative">
-            <div className="flex items-center justify-between text-sm mb-1.5">
-              <div className="flex items-center gap-2">
-                <span className="text-base">{s.icon}</span>
-                <span className="font-medium text-gray-900 dark:text-white">{s.name}</span>
+    <ResponsiveContainer width="100%" height={height}>
+      <BarChart
+        layout="vertical"
+        data={sources.map((s) => ({ ...s, pct: total > 0 ? Math.round((s.amount / total) * 100) : 0 }))}
+        margin={{ left: 0, right: 50, top: 4, bottom: 4 }}
+      >
+        <XAxis type="number" hide />
+        <YAxis
+          type="category"
+          dataKey="name"
+          tick={{ fontSize: 11, fill: "currentColor" }}
+          axisLine={false}
+          tickLine={false}
+          width={95}
+        />
+        <Tooltip
+          content={({ active, payload }) => {
+            if (!active || !payload?.length) return null
+            const s = payload[0].payload as IncomeSource & { pct: number }
+            return (
+              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 shadow-lg text-xs">
+                <p className="font-medium text-gray-800 dark:text-gray-200">
+                  {s.icon} {s.name} — {formatCurrency(s.amount)}
+                </p>
               </div>
-              <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">{pct}%</span>
-            </div>
-            <div title={formatCurrency(s.amount)} className="h-3 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden cursor-default">
-              <div
-                className="h-full rounded-full transition-all group-hover:opacity-80"
-                style={{ width: `${(s.amount / max) * 100}%`, backgroundColor: s.color }}
-              />
-            </div>
-            {/* hover tooltip */}
-            <div className="absolute right-0 -top-8 hidden group-hover:block bg-gray-900 text-white text-xs px-2.5 py-1.5 rounded-lg shadow-lg pointer-events-none z-10 whitespace-nowrap">
-              {formatCurrency(s.amount)}
-            </div>
-          </div>
-        )
-      })}
-    </div>
+            )
+          }}
+        />
+        <Bar dataKey="amount" radius={[0, 4, 4, 0]} isAnimationActive={false}>
+          {sources.map((s, i) => (
+            <Cell key={i} fill={s.color} />
+          ))}
+          <LabelList
+            dataKey="pct"
+            position="right"
+            formatter={(v) => `${v}%`}
+            style={{ fontSize: 11, fill: "#9ca3af" }}
+          />
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
   )
 }
 
@@ -49,16 +69,18 @@ function PieView({ sources, total }: { sources: IncomeSource[]; total: number })
     <ResponsiveContainer width="100%" height={220}>
       <PieChart>
         <Pie data={sources} cx="50%" cy="50%" innerRadius="30%" outerRadius="52%" paddingAngle={2} dataKey="amount">
-          {sources.map((s, i) => <Cell key={i} fill={s.color} />)}
+          {sources.map((_, i) => <Cell key={i} fill={sources[i].color} />)}
         </Pie>
         <Tooltip
           content={({ active, payload }) => {
             if (!active || !payload?.length) return null
             const s = payload[0].payload as IncomeSource
-            const pct = Math.round((s.amount / total) * 100)
+            const pct = total > 0 ? Math.round((s.amount / total) * 100) : 0
             return (
               <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 shadow-lg text-xs">
-                <p className="font-medium text-gray-700 dark:text-gray-300">{s.icon} {s.name} — {pct}% — {formatCurrency(s.amount)}</p>
+                <p className="font-medium text-gray-700 dark:text-gray-300">
+                  {s.icon} {s.name} — {pct}% — {formatCurrency(s.amount)}
+                </p>
               </div>
             )
           }}
@@ -67,7 +89,7 @@ function PieView({ sources, total }: { sources: IncomeSource[]; total: number })
           <div className="flex flex-wrap gap-x-3 gap-y-1 justify-center mt-2">
             {payload?.map((e, i) => {
               const src = sources.find((s) => s.name === e.value)
-              const pct = src ? Math.round((src.amount / total) * 100) : 0
+              const pct = src && total > 0 ? Math.round((src.amount / total) * 100) : 0
               return (
                 <div key={i} className="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400">
                   <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: e.color as string }} />
@@ -107,7 +129,7 @@ export default function IncomeSources({ sources }: { sources: IncomeSource[] }) 
           <button
             onClick={() => setView((v) => (v === "bar" ? "pie" : "bar"))}
             title={view === "bar" ? "Switch to pie chart" : "Switch to bar chart"}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-base"
+            className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           >
             {view === "bar" ? "🥧" : "📊"}
           </button>
@@ -116,7 +138,7 @@ export default function IncomeSources({ sources }: { sources: IncomeSource[] }) 
 
       <div className="flex-1">
         {view === "bar" ? (
-          <BarView sources={sources} total={total} />
+          <HBarView sources={sources} total={total} />
         ) : (
           <PieView sources={sources} total={total} />
         )}
