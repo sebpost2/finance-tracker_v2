@@ -2,18 +2,31 @@
 
 import { prisma } from "@/lib/prisma"
 import { createSession, deleteSession } from "@/lib/session"
+import { checkRateLimit, resetRateLimit } from "@/lib/rateLimit"
+import { LoginSchema, SignupSchema } from "@/lib/schemas"
 import bcrypt from "bcryptjs"
+import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 
 type AuthState = { error?: string } | undefined
 
-export async function signup(state: AuthState, formData: FormData): Promise<AuthState> {
-  const name = formData.get("name") as string
-  const email = formData.get("email") as string
-  const password = formData.get("password") as string
+async function getIp(): Promise<string> {
+  const h = await headers()
+  return h.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown"
+}
 
-  if (!name || !email || !password) return { error: "All fields are required" }
-  if (password.length < 6) return { error: "Password must be at least 6 characters" }
+export async function signup(state: AuthState, formData: FormData): Promise<AuthState> {
+  const raw = {
+    name: formData.get("name"),
+    email: formData.get("email"),
+    password: formData.get("password"),
+  }
+
+  const result = SignupSchema.safeParse(raw)
+  if (!result.success) {
+    return { error: result.error.issues[0].message }
+  }
+  const { name, email, password } = result.data
 
   const existing = await prisma.user.findUnique({ where: { email } })
   if (existing) return { error: "Email already in use" }
@@ -39,10 +52,22 @@ export async function signup(state: AuthState, formData: FormData): Promise<Auth
 }
 
 export async function login(state: AuthState, formData: FormData): Promise<AuthState> {
-  const email = formData.get("email") as string
-  const password = formData.get("password") as string
+  const ip = await getIp()
+  const { allowed, resetInMs } = checkRateLimit(ip)
 
-  if (!email || !password) return { error: "All fields are required" }
+  if (!allowed) {
+    const mins = Math.ceil(resetInMs / 60000)
+    return { error: `Too many login attempts. Try again in ${mins} minute${mins === 1 ? "" : "s"}.` }
+  }
+
+  const raw = {
+    email: formData.get("email"),
+    password: formData.get("password"),
+  }
+
+  const result = LoginSchema.safeParse(raw)
+  if (!result.success) return { error: result.error.issues[0].message }
+  const { email, password } = result.data
 
   const user = await prisma.user.findUnique({ where: { email } })
   if (!user) return { error: "Invalid email or password" }
@@ -50,6 +75,7 @@ export async function login(state: AuthState, formData: FormData): Promise<AuthS
   const isValid = await bcrypt.compare(password, user.password)
   if (!isValid) return { error: "Invalid email or password" }
 
+  resetRateLimit(ip)
   await createSession(user.id)
   redirect("/dashboard")
 }

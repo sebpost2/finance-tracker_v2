@@ -6,24 +6,31 @@ import TransactionList from "@/components/TransactionList"
 import MonthFilter from "@/components/MonthFilter"
 import SearchInput from "@/components/SearchInput"
 import ExportButton from "@/components/ExportButton"
+import TypeFilter from "@/components/TypeFilter"
 import { getMonthRange } from "@/lib/utils"
 
 export const metadata: Metadata = { title: "Transactions | Finance Tracker" }
 
 interface PageProps {
-  searchParams: Promise<{ month?: string; q?: string }>
+  searchParams: Promise<{ month?: string; q?: string; type?: string }>
 }
 
 export default async function TransactionsPage({ searchParams }: PageProps) {
   const { userId } = await verifySession()
-  const { month, q } = await searchParams
+  const { month, q, type } = await searchParams
   const { start, end } = getMonthRange(month)
+
+  const typeFilter =
+    type === "income" ? "INCOME" as const :
+    type === "expense" ? "EXPENSE" as const :
+    undefined
 
   const [transactions, categories] = await Promise.all([
     prisma.transaction.findMany({
       where: {
         userId,
         date: { gte: start, lte: end },
+        ...(typeFilter ? { type: typeFilter } : {}),
         ...(q ? {
           OR: [
             { description: { contains: q, mode: "insensitive" } },
@@ -46,7 +53,14 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
           <Suspense><MonthFilter /></Suspense>
         </div>
       </div>
-      <Suspense><SearchInput /></Suspense>
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="flex-1">
+          <Suspense><SearchInput /></Suspense>
+        </div>
+        <Suspense><TypeFilter /></Suspense>
+      </div>
+
       <TransactionList transactions={transactions} categories={categories} showAdd />
     </div>
   )
