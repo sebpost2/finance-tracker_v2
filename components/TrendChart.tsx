@@ -1,9 +1,9 @@
 "use client"
 
 import {
-  BarChart, Bar, AreaChart, Area,
+  BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip,
-  Legend, ResponsiveContainer,
+  Legend, ResponsiveContainer, ReferenceLine,
 } from "recharts"
 import { useRouter, useSearchParams } from "next/navigation"
 import { formatCurrency } from "@/lib/utils"
@@ -17,7 +17,8 @@ const PERIODS: { key: TrendPeriod; label: string }[] = [
   { key: "all", label: "All" },
 ]
 
-const USE_BAR: TrendPeriod[] = ["1w", "1m"]
+// Periods that show cumulative totals instead of per-period amounts
+const CUMULATIVE_PERIODS: TrendPeriod[] = ["6m", "1y", "all"]
 
 function fmt(v: number) {
   if (v === 0) return "$0"
@@ -25,10 +26,23 @@ function fmt(v: number) {
   return `$${Math.round(v)}`
 }
 
-function CustomTooltip({ active, payload, label }: {
+function makeCumulative(data: TrendPoint[]): TrendPoint[] {
+  let income = 0
+  let expenses = 0
+  return data.map((d) => {
+    income   += d.income
+    expenses += d.expenses
+    return { ...d, income, expenses }
+  })
+}
+
+function CustomTooltip({
+  active, payload, label, cumulative,
+}: {
   active?: boolean
   payload?: { name: string; value: number }[]
   label?: string
+  cumulative: boolean
 }) {
   if (!active || !payload?.length) return null
   const income   = payload.find((p) => p.name === "Income")?.value   ?? 0
@@ -36,8 +50,10 @@ function CustomTooltip({ active, payload, label }: {
   const net      = income - expenses
 
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 shadow-lg text-xs space-y-1 min-w-[150px]">
-      <p className="font-semibold text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-gray-700 pb-1 mb-1">{label}</p>
+    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 shadow-lg text-xs space-y-1 min-w-[160px]">
+      <p className="font-semibold text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-gray-700 pb-1 mb-1">
+        {label}{cumulative ? " (cumulative)" : ""}
+      </p>
       <div className="flex justify-between gap-3">
         <span className="text-gray-400">Income</span>
         <span className="font-semibold text-green-600">{formatCurrency(income)}</span>
@@ -46,12 +62,14 @@ function CustomTooltip({ active, payload, label }: {
         <span className="text-gray-400">Expenses</span>
         <span className="font-semibold text-red-500">{formatCurrency(expenses)}</span>
       </div>
-      <div className="flex justify-between gap-3 border-t border-gray-100 dark:border-gray-700 pt-1">
-        <span className="text-gray-500 font-medium">Net</span>
-        <span className={`font-bold ${net >= 0 ? "text-green-600" : "text-red-500"}`}>
-          {net >= 0 ? "+" : ""}{formatCurrency(net)}
-        </span>
-      </div>
+      {cumulative && (
+        <div className="flex justify-between gap-3 border-t border-gray-100 dark:border-gray-700 pt-1">
+          <span className="text-gray-500 font-medium">Saved so far</span>
+          <span className={`font-bold ${net >= 0 ? "text-green-600" : "text-red-500"}`}>
+            {net >= 0 ? "+" : ""}{formatCurrency(net)}
+          </span>
+        </div>
+      )}
     </div>
   )
 }
@@ -66,53 +84,25 @@ export default function TrendChart({ data, period }: { data: TrendPoint[]; perio
     router.push(`?${params.toString()}`)
   }
 
+  const isCumulative = CUMULATIVE_PERIODS.includes(period)
+  const chartData    = isCumulative ? makeCumulative(data) : data
+
   const totalIncome   = data.reduce((s, d) => s + d.income, 0)
   const totalExpenses = data.reduce((s, d) => s + d.expenses, 0)
-  const net           = totalIncome - totalExpenses
   const hasData       = data.some((d) => d.income > 0 || d.expenses > 0)
-  const isBar         = USE_BAR.includes(period)
 
-  // For long periods (1Y/All), skip every other label to avoid crowding
   const xInterval = period === "1y" ? 1 : 0
-
-  const axisProps = { tick: { fontSize: 10 }, axisLine: false as const, tickLine: false as const }
-
-  const chart = isBar ? (
-    <BarChart data={data} barGap={3} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
-      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
-      <XAxis dataKey="label" {...axisProps} interval={0} />
-      <YAxis tickFormatter={fmt} {...axisProps} width={38} />
-      <Tooltip content={<CustomTooltip />} />
-      <Legend iconType="circle" iconSize={7} />
-      <Bar dataKey="income"   name="Income"   fill="#22c55e" radius={[4, 4, 0, 0]} />
-      <Bar dataKey="expenses" name="Expenses" fill="#ef4444" radius={[4, 4, 0, 0]} />
-    </BarChart>
-  ) : (
-    <AreaChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
-      <defs>
-        <linearGradient id="gIncome" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="5%"  stopColor="#22c55e" stopOpacity={0.25} />
-          <stop offset="95%" stopColor="#22c55e" stopOpacity={0}    />
-        </linearGradient>
-        <linearGradient id="gExpenses" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="5%"  stopColor="#ef4444" stopOpacity={0.2} />
-          <stop offset="95%" stopColor="#ef4444" stopOpacity={0}   />
-        </linearGradient>
-      </defs>
-      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
-      <XAxis dataKey="label" {...axisProps} interval={xInterval} />
-      <YAxis tickFormatter={fmt} {...axisProps} width={38} />
-      <Tooltip content={<CustomTooltip />} />
-      <Legend iconType="circle" iconSize={7} />
-      <Area type="monotone" dataKey="income"   name="Income"   stroke="#22c55e" strokeWidth={2.5} fill="url(#gIncome)"   dot={false} activeDot={{ r: 4 }} />
-      <Area type="monotone" dataKey="expenses" name="Expenses" stroke="#ef4444" strokeWidth={2.5} fill="url(#gExpenses)" dot={false} activeDot={{ r: 4 }} />
-    </AreaChart>
-  )
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-6">
+      {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-base font-semibold text-gray-900 dark:text-white">Income vs Expenses</h2>
+        <div>
+          <h2 className="text-base font-semibold text-gray-900 dark:text-white">Income vs Expenses</h2>
+          {isCumulative && (
+            <p className="text-xs text-gray-400 mt-0.5">Cumulative — bars show running totals</p>
+          )}
+        </div>
         <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1 gap-0.5">
           {PERIODS.map(({ key, label }) => (
             <button
@@ -130,17 +120,17 @@ export default function TrendChart({ data, period }: { data: TrendPoint[]; perio
         </div>
       </div>
 
-      {/* Period summary — wraps on mobile so Net stays inside the card */}
+      {/* Period totals */}
       {hasData && (
         <div className="flex flex-wrap gap-x-4 gap-y-1 mb-4 text-xs">
           <div className="flex items-center gap-1.5">
             <div className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
-            <span className="text-gray-400">Income</span>
+            <span className="text-gray-400">{isCumulative ? "Total income" : "Income"}</span>
             <span className="font-semibold text-green-600">{formatCurrency(totalIncome)}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-2 h-2 rounded-full bg-red-500 shrink-0" />
-            <span className="text-gray-400">Expenses</span>
+            <span className="text-gray-400">{isCumulative ? "Total expenses" : "Expenses"}</span>
             <span className="font-semibold text-red-500">{formatCurrency(totalExpenses)}</span>
           </div>
         </div>
@@ -151,8 +141,37 @@ export default function TrendChart({ data, period }: { data: TrendPoint[]; perio
           No data for this period
         </div>
       ) : (
-        <ResponsiveContainer width="100%" height={200}>
-          {chart}
+        <ResponsiveContainer width="100%" height={210}>
+          <BarChart data={chartData} barGap={3} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+            <XAxis
+              dataKey="label"
+              tick={{ fontSize: 10 }}
+              axisLine={false}
+              tickLine={false}
+              interval={xInterval}
+            />
+            <YAxis
+              tickFormatter={fmt}
+              tick={{ fontSize: 10 }}
+              axisLine={false}
+              tickLine={false}
+              width={38}
+            />
+            <Tooltip
+              content={(props) => (
+                <CustomTooltip
+                  active={props.active}
+                  payload={props.payload as unknown as { name: string; value: number }[]}
+                  label={props.label as string}
+                  cumulative={isCumulative}
+                />
+              )}
+            />
+            <Legend iconType="circle" iconSize={7} />
+            <Bar dataKey="income"   name="Income"   fill="#22c55e" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="expenses" name="Expenses" fill="#ef4444" radius={[4, 4, 0, 0]} />
+          </BarChart>
         </ResponsiveContainer>
       )}
     </div>
