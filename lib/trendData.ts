@@ -8,8 +8,8 @@ export interface TrendPoint {
   expenses: number
 }
 
-const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
-const SHORT_DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]
+const MONTHS     = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+const SHORT_DAYS = ["Su","Mo","Tu","We","Th","Fr","Sa"]
 
 function monthKey(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
@@ -18,7 +18,7 @@ function monthKey(d: Date) {
 export async function getTrendData(userId: string, period: TrendPeriod): Promise<TrendPoint[]> {
   const now = new Date()
 
-  // ── 1 Week: last 7 days grouped by day ───────────────────────────────────
+  // ── 1 Week: last 7 days, label = "Mo 12" style ───────────────────────────
   if (period === "1w") {
     const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6)
     const txns = await prisma.transaction.findMany({
@@ -39,7 +39,7 @@ export async function getTrendData(userId: string, period: TrendPeriod): Promise
     })
   }
 
-  // ── 1 Month: last 4-5 weeks grouped by week ───────────────────────────────
+  // ── 1 Month: last 4 weeks, label = "Wk 1" style ──────────────────────────
   if (period === "1m") {
     const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 27)
     start.setHours(0, 0, 0, 0)
@@ -47,78 +47,62 @@ export async function getTrendData(userId: string, period: TrendPeriod): Promise
       where: { userId, date: { gte: start } },
       select: { amount: true, type: true, date: true },
     })
-
-    // Build 4 week buckets
-    const weeks: TrendPoint[] = Array.from({ length: 4 }, (_, w) => {
-      const weekStart = new Date(start.getFullYear(), start.getMonth(), start.getDate() + w * 7)
-      const weekEnd   = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + 6, 23, 59, 59)
+    return Array.from({ length: 4 }, (_, w) => {
+      const wStart = new Date(start.getFullYear(), start.getMonth(), start.getDate() + w * 7)
+      const wEnd   = new Date(wStart.getFullYear(), wStart.getMonth(), wStart.getDate() + 6, 23, 59, 59)
       const t = txns.filter((t) => {
         const dt = new Date(t.date)
-        return dt >= weekStart && dt <= weekEnd
+        return dt >= wStart && dt <= wEnd
       })
-      const mo = MONTHS[weekStart.getMonth()]
       return {
-        label: `${mo} ${weekStart.getDate()}`,
+        label: `${MONTHS[wStart.getMonth()]} ${wStart.getDate()}`,
         income:   t.filter((t) => t.type === "INCOME").reduce((s, t) => s + t.amount, 0),
         expenses: t.filter((t) => t.type === "EXPENSE").reduce((s, t) => s + t.amount, 0),
       }
     })
-    return weeks
   }
 
-  // ── 6 Months: 6 monthly buckets ───────────────────────────────────────────
   if (period === "6m") {
-    const start = new Date(now.getFullYear(), now.getMonth() - 5, 1)
-    return buildMonthly(userId, start, 6)
+    return buildMonthly(userId, new Date(now.getFullYear(), now.getMonth() - 5, 1), 6)
   }
-
-  // ── 1 Year: 12 monthly buckets ────────────────────────────────────────────
   if (period === "1y") {
-    const start = new Date(now.getFullYear(), now.getMonth() - 11, 1)
-    return buildMonthly(userId, start, 12)
+    return buildMonthly(userId, new Date(now.getFullYear(), now.getMonth() - 11, 1), 12)
   }
 
-  // ── All time: monthly from first transaction ──────────────────────────────
+  // All time
   const first = await prisma.transaction.findFirst({
     where: { userId },
     orderBy: { date: "asc" },
     select: { date: true },
   })
   if (!first) return []
-  const firstDate = new Date(first.date)
-  const firstMonth = new Date(firstDate.getFullYear(), firstDate.getMonth(), 1)
-  const months =
-    (now.getFullYear() - firstMonth.getFullYear()) * 12 +
-    (now.getMonth() - firstMonth.getMonth()) + 1
+  const firstMonth = new Date(new Date(first.date).getFullYear(), new Date(first.date).getMonth(), 1)
+  const months = (now.getFullYear() - firstMonth.getFullYear()) * 12 + (now.getMonth() - firstMonth.getMonth()) + 1
   return buildMonthly(userId, firstMonth, months)
 }
 
 async function buildMonthly(userId: string, start: Date, count: number): Promise<TrendPoint[]> {
-  const end = new Date()
   const txns = await prisma.transaction.findMany({
-    where: { userId, date: { gte: start, lte: end } },
+    where: { userId, date: { gte: start, lte: new Date() } },
     select: { amount: true, type: true, date: true },
   })
 
   const map = new Map<string, TrendPoint>()
   for (let i = 0; i < count; i++) {
     const d = new Date(start.getFullYear(), start.getMonth() + i, 1)
-    const key = monthKey(d)
-    const label =
-      count > 13
-        ? `${MONTHS[d.getMonth()]} '${String(d.getFullYear()).slice(2)}`
-        : MONTHS[d.getMonth()]
+    const key   = monthKey(d)
+    const label = count > 13
+      ? `${MONTHS[d.getMonth()]} '${String(d.getFullYear()).slice(2)}`
+      : MONTHS[d.getMonth()]
     map.set(key, { label, income: 0, expenses: 0 })
   }
-
   for (const t of txns) {
-    const key = monthKey(new Date(t.date))
+    const key   = monthKey(new Date(t.date))
     const entry = map.get(key)
     if (entry) {
       if (t.type === "INCOME") entry.income += t.amount
       else entry.expenses += t.amount
     }
   }
-
   return [...map.values()]
 }
