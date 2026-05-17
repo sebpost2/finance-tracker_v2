@@ -11,7 +11,6 @@ function BudgetBar({ spent, budget }: { spent: number; budget: number }) {
   const pct = Math.min((spent / budget) * 100, 100)
   const barColor = pct >= 100 ? "bg-red-500" : pct >= 80 ? "bg-yellow-500" : "bg-green-500"
   const textColor = pct >= 100 ? "text-red-500" : pct >= 80 ? "text-yellow-600 dark:text-yellow-500" : "text-green-600"
-
   return (
     <div className="mt-1.5 space-y-1">
       <div className="flex justify-between text-xs">
@@ -25,7 +24,12 @@ function BudgetBar({ spent, budget }: { spent: number; budget: number }) {
   )
 }
 
-export default function CategoryList({ categories }: { categories: CategoryWithSpending[] }) {
+interface Props {
+  categories: CategoryWithSpending[]
+  mode?: "expense" | "income"
+}
+
+export default function CategoryList({ categories, mode = "expense" }: Props) {
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<CategoryWithSpending | undefined>()
   const [isPending, startTransition] = useTransition()
@@ -49,6 +53,13 @@ export default function CategoryList({ categories }: { categories: CategoryWithS
     })
   }
 
+  const emptyLabel = mode === "income"
+    ? "No income recorded this month"
+    : "No categories yet"
+  const emptyDetail = mode === "income"
+    ? "Assign income transactions to categories to see them here."
+    : "Create categories to organize your transactions and track spending."
+
   return (
     <>
       {showForm && <CategoryForm category={editing} onClose={closeForm} />}
@@ -66,17 +77,17 @@ export default function CategoryList({ categories }: { categories: CategoryWithS
 
         {categories.length === 0 ? (
           <div className="py-16 flex flex-col items-center gap-3 text-center px-6">
-            <span className="text-5xl">🏷️</span>
-            <p className="font-medium text-gray-900 dark:text-white">No categories yet</p>
-            <p className="text-sm text-gray-400 max-w-xs">
-              Create categories to organize your transactions and track spending by area.
-            </p>
-            <button
-              onClick={() => { setEditing(undefined); setShowForm(true) }}
-              className="mt-1 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
-            >
-              + Add category
-            </button>
+            <span className="text-5xl">{mode === "income" ? "💵" : "🏷️"}</span>
+            <p className="font-medium text-gray-900 dark:text-white">{emptyLabel}</p>
+            <p className="text-sm text-gray-400 max-w-xs">{emptyDetail}</p>
+            {mode === "expense" && (
+              <button
+                onClick={() => { setEditing(undefined); setShowForm(true) }}
+                className="mt-1 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+              >
+                + Add category
+              </button>
+            )}
           </div>
         ) : (
           <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-6 ${isPending ? "opacity-50" : ""}`}>
@@ -98,8 +109,18 @@ export default function CategoryList({ categories }: { categories: CategoryWithS
                     <button onClick={() => handleDelete(c.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors" aria-label="Delete">🗑️</button>
                   </div>
                 </div>
-                {c.budget && c.budget > 0 && (
+
+                {/* Expense mode: show budget progress bar */}
+                {mode === "expense" && c.budget && c.budget > 0 && (
                   <BudgetBar spent={c.spent} budget={c.budget} />
+                )}
+
+                {/* Income mode: show received amount */}
+                {mode === "income" && (c.received ?? 0) > 0 && (
+                  <div className="mt-1 flex items-center justify-between text-xs">
+                    <span className="text-gray-400">Received this month</span>
+                    <span className="font-semibold text-green-600">{formatCurrency(c.received ?? 0)}</span>
+                  </div>
                 )}
               </div>
             ))}

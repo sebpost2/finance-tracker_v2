@@ -55,7 +55,7 @@ export async function getTrendData(userId: string, period: TrendPeriod): Promise
         return dt >= wStart && dt <= wEnd
       })
       return {
-        label: `${MONTHS[wStart.getMonth()]} ${wStart.getDate()}`,
+        label: `Wk${w + 1}`,
         income:   t.filter((t) => t.type === "INCOME").reduce((s, t) => s + t.amount, 0),
         expenses: t.filter((t) => t.type === "EXPENSE").reduce((s, t) => s + t.amount, 0),
       }

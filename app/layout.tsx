@@ -7,9 +7,26 @@ import "./globals.css"
 
 const inter = Inter({ subsets: ["latin"] })
 
+const DEMO_URL = "https://finance-tracker-v2-sebpost2s-projects.vercel.app"
+
 export const metadata: Metadata = {
   title: "Finance Tracker",
-  description: "Track your income and expenses",
+  description: "Full-stack personal finance app — track income, expenses, and budgets with charts and analytics.",
+  icons: {
+    icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>",
+  },
+  openGraph: {
+    title: "Finance Tracker",
+    description: "Full-stack personal finance app built with Next.js 16, Prisma, and Supabase.",
+    url: DEMO_URL,
+    siteName: "Finance Tracker",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "Finance Tracker",
+    description: "Full-stack personal finance app built with Next.js 16, Prisma, and Supabase.",
+  },
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

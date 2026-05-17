@@ -8,6 +8,7 @@ export interface Category {
 
 export interface CategoryWithSpending extends Category {
   spent: number
+  received?: number
 }
 
 export interface Transaction {
