@@ -35,10 +35,10 @@ export default async function CategoriesPage({ searchParams }: PageProps) {
   const spendingMap = new Map(spendingResult.map((s) => [s.categoryId, s._sum.amount ?? 0]))
   const incomeMap = new Map(incomeGrouped.map((s) => [s.categoryId, s._sum.amount ?? 0]))
 
-  const categoriesWithSpending = categories.map((c) => ({
-    ...c,
-    spent: spendingMap.get(c.id) ?? 0,
-  }))
+  const categoriesWithSpending = categories
+    .map((c) => ({ ...c, spent: spendingMap.get(c.id) ?? 0 }))
+    // Expense view only shows categories with actual expenses or a budget set
+    .filter((c) => c.spent > 0 || (c.budget && c.budget > 0))
 
   const incomeSources = categories
     .map((c) => ({

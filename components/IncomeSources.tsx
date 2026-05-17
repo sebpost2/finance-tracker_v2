@@ -125,7 +125,6 @@ export default function IncomeSources({ sources }: { sources: IncomeSource[] }) 
       <div className="flex items-center justify-between mb-5 flex-shrink-0">
         <h2 className="text-base font-semibold text-gray-900 dark:text-white">Income by Source</h2>
         <div className="flex items-center gap-3">
-          <span className="text-sm font-semibold text-green-600">{formatCurrency(total)}</span>
           <button
             onClick={() => setView((v) => (v === "bar" ? "pie" : "bar"))}
             title={view === "bar" ? "Switch to pie chart" : "Switch to bar chart"}
