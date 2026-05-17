@@ -3,7 +3,6 @@ import { Suspense } from "react"
 import { verifySession } from "@/lib/dal"
 import { prisma } from "@/lib/prisma"
 import CategoryList from "@/components/CategoryList"
-import IncomeSources from "@/components/IncomeSources"
 import CategoryViewToggle from "@/components/CategoryViewToggle"
 import { getMonthRange } from "@/lib/utils"
 
@@ -18,7 +17,7 @@ export default async function CategoriesPage({ searchParams }: PageProps) {
   const { view = "expense" } = await searchParams
   const { start } = getMonthRange()
 
-  const [categories, spendingResult, incomeGrouped] = await Promise.all([
+  const [categories, spendingResult, incomeResult] = await Promise.all([
     prisma.category.findMany({ where: { userId }, orderBy: { name: "asc" } }),
     prisma.transaction.groupBy({
       by: ["categoryId"],
@@ -33,23 +32,21 @@ export default async function CategoriesPage({ searchParams }: PageProps) {
   ])
 
   const spendingMap = new Map(spendingResult.map((s) => [s.categoryId, s._sum.amount ?? 0]))
-  const incomeMap = new Map(incomeGrouped.map((s) => [s.categoryId, s._sum.amount ?? 0]))
+  const incomeMap   = new Map(incomeResult.map((s)   => [s.categoryId, s._sum.amount ?? 0]))
 
-  const categoriesWithSpending = categories
-    .map((c) => ({ ...c, spent: spendingMap.get(c.id) ?? 0 }))
-    // Expense view only shows categories with actual expenses or a budget set
-    .filter((c) => c.spent > 0 || (c.budget && c.budget > 0))
+  const isExpenseView = view !== "income"
 
-  const incomeSources = categories
+  const displayCategories = categories
     .map((c) => ({
-      id: c.id,
-      name: c.name,
-      icon: c.icon,
-      color: c.color,
-      amount: incomeMap.get(c.id) ?? 0,
+      ...c,
+      spent:    spendingMap.get(c.id) ?? 0,
+      received: incomeMap.get(c.id)   ?? 0,
     }))
-    .filter((c) => c.amount > 0)
-    .sort((a, b) => b.amount - a.amount)
+    .filter((c) =>
+      isExpenseView
+        ? c.spent > 0 || (c.budget && c.budget > 0)   // expense: has spending or budget
+        : c.received > 0                                // income: only show if received something
+    )
 
   return (
     <div className="space-y-5">
@@ -60,11 +57,10 @@ export default async function CategoriesPage({ searchParams }: PageProps) {
         </Suspense>
       </div>
 
-      {view === "income" ? (
-        <IncomeSources sources={incomeSources} />
-      ) : (
-        <CategoryList categories={categoriesWithSpending} />
-      )}
+      <CategoryList
+        categories={displayCategories}
+        mode={isExpenseView ? "expense" : "income"}
+      />
     </div>
   )
 }

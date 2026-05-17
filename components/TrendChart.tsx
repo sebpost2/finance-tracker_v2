@@ -143,12 +143,6 @@ export default function TrendChart({ data, period }: { data: TrendPoint[]; perio
             <span className="text-gray-400">Expenses</span>
             <span className="font-semibold text-red-500">{formatCurrency(totalExpenses)}</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className="text-gray-400">Net</span>
-            <span className={`font-bold ${net >= 0 ? "text-green-600" : "text-red-500"}`}>
-              {net >= 0 ? "+" : ""}{formatCurrency(net)}
-            </span>
-          </div>
         </div>
       )}
 
