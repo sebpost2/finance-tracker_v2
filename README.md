@@ -1,3 +1,7 @@
+**[English](README.md) · [Español](README.es.md)**
+
+---
+
 # Finance Tracker
 
 A full-stack personal finance application to track income and expenses, visualize spending by category, and manage monthly budgets.
