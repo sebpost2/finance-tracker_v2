@@ -3,23 +3,25 @@
 import { useActionState, useTransition } from "react"
 import { login } from "@/app/actions/auth"
 import { loginAsDemo } from "@/app/actions/demo"
+import { useLanguage } from "@/components/LanguageProvider"
 import Link from "next/link"
 
 export default function LoginPage() {
   const [state, action, pending] = useActionState(login, undefined)
   const [demoPending, startDemo] = useTransition()
+  const { t } = useLanguage()
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-8">
       <div className="text-center mb-8">
         <div className="text-4xl mb-3">💰</div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Finance Tracker</h1>
-        <p className="text-gray-500 dark:text-gray-400 mt-1">Sign in to your account</p>
+        <p className="text-gray-500 dark:text-gray-400 mt-1">{t.auth.loginSubtitle}</p>
       </div>
 
       <form action={action} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t.auth.email}</label>
           <input
             name="email"
             type="email"
@@ -29,7 +31,7 @@ export default function LoginPage() {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t.auth.password}</label>
           <input
             name="password"
             type="password"
@@ -51,7 +53,7 @@ export default function LoginPage() {
           disabled={pending || demoPending}
           className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-medium py-2.5 px-4 rounded-lg transition-colors text-sm"
         >
-          {pending ? "Signing in…" : "Sign in"}
+          {pending ? t.auth.signingIn : t.auth.signIn}
         </button>
       </form>
 
@@ -60,7 +62,7 @@ export default function LoginPage() {
           <div className="w-full border-t border-gray-200 dark:border-gray-700" />
         </div>
         <div className="relative flex justify-center">
-          <span className="bg-white dark:bg-gray-900 px-3 text-xs text-gray-400">or</span>
+          <span className="bg-white dark:bg-gray-900 px-3 text-xs text-gray-400">{t.loginOr}</span>
         </div>
       </div>
 
@@ -70,18 +72,18 @@ export default function LoginPage() {
         className="w-full flex items-center justify-center gap-2 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium py-2.5 px-4 rounded-lg transition-colors text-sm disabled:opacity-50"
       >
         {demoPending ? (
-          "Loading demo…"
+          t.auth.loadingDemo
         ) : (
           <>
-            <span>🚀</span> Try demo — no account needed
+            <span>🚀</span> {t.auth.tryDemo}
           </>
         )}
       </button>
 
       <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-6">
-        Don&apos;t have an account?{" "}
+        {t.auth.noAccount}{" "}
         <Link href="/register" className="text-indigo-600 hover:text-indigo-700 font-medium">
-          Sign up
+          {t.auth.signUp}
         </Link>
       </p>
     </div>

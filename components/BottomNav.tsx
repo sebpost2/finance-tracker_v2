@@ -2,16 +2,18 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-
-const links = [
-  { href: "/dashboard", label: "Dashboard", icon: "📊" },
-  { href: "/dashboard/transactions", label: "Transactions", icon: "💳" },
-  { href: "/dashboard/categories", label: "Categories", icon: "🏷️" },
-  { href: "/dashboard/settings", label: "Settings", icon: "⚙️" },
-]
+import { useLanguage } from "./LanguageProvider"
 
 export default function BottomNav() {
   const pathname = usePathname()
+  const { t } = useLanguage()
+
+  const links = [
+    { href: "/dashboard", label: t.nav.dashboard, icon: "📊" },
+    { href: "/dashboard/transactions", label: t.nav.transactions, icon: "💳" },
+    { href: "/dashboard/categories", label: t.nav.categories, icon: "🏷️" },
+    { href: "/dashboard/settings", label: t.nav.settings, icon: "⚙️" },
+  ]
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 md:hidden">

@@ -1,5 +1,8 @@
+"use client"
+
 import Link from "next/link"
 import { formatCurrency } from "@/lib/utils"
+import { useLanguage } from "./LanguageProvider"
 
 interface CategoryAlert {
   id: string
@@ -15,6 +18,7 @@ interface Props {
 }
 
 export default function BudgetAlerts({ overBudget, nearBudget }: Props) {
+  const { t } = useLanguage()
   if (overBudget.length === 0 && nearBudget.length === 0) return null
 
   return (
@@ -22,7 +26,7 @@ export default function BudgetAlerts({ overBudget, nearBudget }: Props) {
       {overBudget.length > 0 && (
         <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-900 rounded-2xl px-5 py-4">
           <p className="text-sm font-semibold text-red-700 dark:text-red-400 mb-2">
-            🔴 Over budget — {overBudget.length} {overBudget.length === 1 ? "category" : "categories"}
+            {t.budgetAlerts.overTitle(overBudget.length)}
           </p>
           <div className="flex flex-wrap gap-2">
             {overBudget.map((c) => (
@@ -45,7 +49,7 @@ export default function BudgetAlerts({ overBudget, nearBudget }: Props) {
       {nearBudget.length > 0 && (
         <div className="bg-yellow-50 dark:bg-yellow-950/50 border border-yellow-200 dark:border-yellow-900 rounded-2xl px-5 py-4">
           <p className="text-sm font-semibold text-yellow-700 dark:text-yellow-400 mb-2">
-            ⚠️ Nearing limit — {nearBudget.length} {nearBudget.length === 1 ? "category" : "categories"}
+            {t.budgetAlerts.nearTitle(nearBudget.length)}
           </p>
           <div className="flex flex-wrap gap-2">
             {nearBudget.map((c) => (

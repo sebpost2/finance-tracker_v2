@@ -3,18 +3,20 @@
 import { useState, useTransition } from "react"
 import { deleteCategory } from "@/app/actions/categories"
 import { useToast } from "@/contexts/ToastContext"
+import { useLanguage } from "./LanguageProvider"
 import CategoryForm from "./CategoryForm"
 import { formatCurrency } from "@/lib/utils"
 import type { CategoryWithSpending } from "@/types"
 
 function BudgetBar({ spent, budget }: { spent: number; budget: number }) {
+  const { t } = useLanguage()
   const pct = Math.min((spent / budget) * 100, 100)
   const barColor = pct >= 100 ? "bg-red-500" : pct >= 80 ? "bg-yellow-500" : "bg-green-500"
   const textColor = pct >= 100 ? "text-red-500" : pct >= 80 ? "text-yellow-600 dark:text-yellow-500" : "text-green-600"
   return (
     <div className="mt-1.5 space-y-1">
       <div className="flex justify-between text-xs">
-        <span className={textColor}>{formatCurrency(spent)} spent</span>
+        <span className={textColor}>{formatCurrency(spent)} {t.categories.spent}</span>
         <span className="text-gray-400">{formatCurrency(budget)}</span>
       </div>
       <div className="h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
@@ -34,6 +36,7 @@ export default function CategoryList({ categories, mode = "expense" }: Props) {
   const [editing, setEditing] = useState<CategoryWithSpending | undefined>()
   const [isPending, startTransition] = useTransition()
   const { showToast } = useToast()
+  const { t } = useLanguage()
 
   function openEdit(c: CategoryWithSpending) {
     setEditing(c)
@@ -46,19 +49,21 @@ export default function CategoryList({ categories, mode = "expense" }: Props) {
   }
 
   function handleDelete(id: string) {
-    if (!confirm("Delete this category? Transactions using it will be uncategorized.")) return
+    if (!confirm(t.categories.confirmDelete)) return
     startTransition(async () => {
       await deleteCategory(id)
-      showToast("Category deleted", "info")
+      showToast(t.categories.deleted, "info")
     })
   }
 
-  const emptyLabel = mode === "income"
-    ? "No income recorded this month"
-    : "No categories yet"
-  const emptyDetail = mode === "income"
-    ? "Assign income transactions to categories to see them here."
-    : "Create categories to organize your transactions and track spending."
+  const emptyLabel =
+    mode === "income"
+      ? t.categories.emptyIncomeTitle
+      : t.categories.emptyExpenseTitle
+  const emptyDetail =
+    mode === "income"
+      ? t.categories.emptyIncomeDetail
+      : t.categories.emptyExpenseDetail
 
   return (
     <>
@@ -66,12 +71,14 @@ export default function CategoryList({ categories, mode = "expense" }: Props) {
 
       <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800">
-          <h2 className="text-base font-semibold text-gray-900 dark:text-white">Categories</h2>
+          <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+            {t.categories.title}
+          </h2>
           <button
             onClick={() => { setEditing(undefined); setShowForm(true) }}
             className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
           >
-            + Add
+            {t.categories.add}
           </button>
         </div>
 
@@ -85,7 +92,7 @@ export default function CategoryList({ categories, mode = "expense" }: Props) {
                 onClick={() => { setEditing(undefined); setShowForm(true) }}
                 className="mt-1 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
               >
-                + Add category
+                {t.categories.addLong}
               </button>
             )}
           </div>
@@ -105,8 +112,8 @@ export default function CategoryList({ categories, mode = "expense" }: Props) {
                     <div className="w-2.5 h-2.5 rounded-full mt-0.5" style={{ backgroundColor: c.color }} />
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0">
-                    <button onClick={() => openEdit(c)} className="p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors" aria-label="Edit">✏️</button>
-                    <button onClick={() => handleDelete(c.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors" aria-label="Delete">🗑️</button>
+                    <button onClick={() => openEdit(c)} className="p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors" aria-label={t.transactions.editAria}>✏️</button>
+                    <button onClick={() => handleDelete(c.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors" aria-label={t.transactions.deleteAria}>🗑️</button>
                   </div>
                 </div>
 
@@ -118,7 +125,7 @@ export default function CategoryList({ categories, mode = "expense" }: Props) {
                 {/* Income mode: show received amount */}
                 {mode === "income" && (c.received ?? 0) > 0 && (
                   <div className="mt-1 flex items-center justify-between text-xs">
-                    <span className="text-gray-400">Received this month</span>
+                    <span className="text-gray-400">{t.categories.receivedThisMonth}</span>
                     <span className="font-semibold text-green-600">{formatCurrency(c.received ?? 0)}</span>
                   </div>
                 )}

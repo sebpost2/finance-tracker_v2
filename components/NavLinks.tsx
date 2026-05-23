@@ -2,16 +2,18 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-
-const links = [
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/dashboard/transactions", label: "Transactions" },
-  { href: "/dashboard/categories", label: "Categories" },
-  { href: "/dashboard/settings", label: "Settings" },
-]
+import { useLanguage } from "./LanguageProvider"
 
 export default function NavLinks() {
   const pathname = usePathname()
+  const { t } = useLanguage()
+
+  const links = [
+    { href: "/dashboard", label: t.nav.dashboard },
+    { href: "/dashboard/transactions", label: t.nav.transactions },
+    { href: "/dashboard/categories", label: t.nav.categories },
+    { href: "/dashboard/settings", label: t.nav.settings },
+  ]
 
   return (
     <nav className="flex items-center gap-1">

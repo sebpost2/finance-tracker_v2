@@ -3,6 +3,7 @@
 import { useTransition } from "react"
 import { createCategory, updateCategory } from "@/app/actions/categories"
 import { useToast } from "@/contexts/ToastContext"
+import { useLanguage } from "./LanguageProvider"
 import type { Category } from "@/types"
 
 const ICONS = ["💰", "🍔", "🚗", "🎮", "💊", "🛍️", "💼", "🏠", "✈️", "📚", "⚽", "🎵", "💻", "🐶", "☕"]
@@ -20,15 +21,16 @@ interface Props {
 export default function CategoryForm({ category, onClose }: Props) {
   const [isPending, startTransition] = useTransition()
   const { showToast } = useToast()
+  const { t } = useLanguage()
 
   function handleSubmit(formData: FormData) {
     startTransition(async () => {
       if (category) {
         await updateCategory(category.id, formData)
-        showToast("Category updated")
+        showToast(t.categories.updated)
       } else {
         await createCategory(formData)
-        showToast("Category added")
+        showToast(t.categories.added)
       }
       onClose()
     })
@@ -38,25 +40,28 @@ export default function CategoryForm({ category, onClose }: Props) {
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-5">
-          {category ? "Edit Category" : "Add Category"}
+          {category ? t.categories.editTitle : t.categories.addTitle}
         </h2>
 
         <form action={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              {t.categories.name}
+            </label>
             <input
               name="name"
               type="text"
               required
               defaultValue={category?.name}
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-              placeholder="e.g. Food"
+              placeholder={t.categories.namePlaceholder}
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Monthly budget <span className="text-gray-400 font-normal">(optional)</span>
+              {t.categories.monthlyBudget}{" "}
+              <span className="text-gray-400 font-normal">{t.categories.optional}</span>
             </label>
             <input
               name="budget"
@@ -65,12 +70,14 @@ export default function CategoryForm({ category, onClose }: Props) {
               min="0.01"
               defaultValue={category?.budget ?? ""}
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-              placeholder="e.g. 500"
+              placeholder={t.categories.budgetPlaceholder}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Icon</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              {t.categories.icon}
+            </label>
             <div className="flex flex-wrap gap-2">
               {ICONS.map((icon) => (
                 <label key={icon} className="cursor-pointer">
@@ -84,7 +91,9 @@ export default function CategoryForm({ category, onClose }: Props) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Color</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              {t.categories.color}
+            </label>
             <div className="flex flex-wrap gap-2">
               {COLORS.map((color) => (
                 <label key={color} className="cursor-pointer">
@@ -96,9 +105,15 @@ export default function CategoryForm({ category, onClose }: Props) {
           </div>
 
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose} disabled={isPending} className="flex-1 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50">Cancel</button>
+            <button type="button" onClick={onClose} disabled={isPending} className="flex-1 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50">
+              {t.categories.cancel}
+            </button>
             <button type="submit" disabled={isPending} className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-colors">
-              {isPending ? "Saving…" : category ? "Update" : "Add"}
+              {isPending
+                ? t.categories.saving
+                : category
+                  ? t.categories.update
+                  : t.categories.save}
             </button>
           </div>
         </form>

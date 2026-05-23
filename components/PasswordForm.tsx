@@ -3,28 +3,30 @@
 import { useActionState, useEffect, useRef } from "react"
 import { changePassword } from "@/app/actions/settings"
 import { useToast } from "@/contexts/ToastContext"
+import { useLanguage } from "./LanguageProvider"
 
 export default function PasswordForm() {
   const [state, action, pending] = useActionState(changePassword, undefined)
   const { showToast } = useToast()
   const formRef = useRef<HTMLFormElement>(null)
+  const { t } = useLanguage()
 
   useEffect(() => {
     if (state?.success) {
-      showToast("Password changed")
+      showToast(t.password.saved)
       formRef.current?.reset()
     }
-  }, [state?.success])
+  }, [state?.success, showToast, t.password.saved])
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-6">
-      <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-1">Security</h2>
-      <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">Change your password</p>
+      <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-1">{t.password.section}</h2>
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">{t.password.sectionHint}</p>
 
       <form ref={formRef} action={action} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Current password
+            {t.password.current}
           </label>
           <input
             name="currentPassword"
@@ -37,7 +39,7 @@ export default function PasswordForm() {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            New password
+            {t.password.next}
           </label>
           <input
             name="newPassword"
@@ -45,13 +47,13 @@ export default function PasswordForm() {
             required
             minLength={6}
             className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-            placeholder="Min. 6 characters"
+            placeholder={t.password.nextPlaceholder}
           />
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Confirm new password
+            {t.password.confirm}
           </label>
           <input
             name="confirmPassword"
@@ -73,7 +75,7 @@ export default function PasswordForm() {
           disabled={pending}
           className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium px-5 py-2.5 rounded-lg transition-colors"
         >
-          {pending ? "Updating…" : "Update password"}
+          {pending ? t.password.saving : t.password.save}
         </button>
       </form>
     </div>

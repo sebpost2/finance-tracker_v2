@@ -1,9 +1,11 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useLanguage } from "./LanguageProvider"
 
 export default function ThemeToggle() {
   const [isDark, setIsDark] = useState(false)
+  const { t } = useLanguage()
 
   useEffect(() => {
     setIsDark(document.documentElement.classList.contains("dark"))
@@ -25,7 +27,7 @@ export default function ThemeToggle() {
     <button
       onClick={toggle}
       className="p-2 rounded-lg text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-      aria-label="Toggle theme"
+      aria-label={t.theme.toggleAria}
     >
       {isDark ? "☀️" : "🌙"}
     </button>

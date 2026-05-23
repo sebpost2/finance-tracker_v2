@@ -6,6 +6,7 @@ import {
   PieChart, Pie, Tooltip, Legend, ResponsiveContainer,
 } from "recharts"
 import { formatCurrency } from "@/lib/utils"
+import { useLanguage } from "./LanguageProvider"
 
 interface ChartData {
   name: string
@@ -15,14 +16,14 @@ interface ChartData {
 
 const MAX_SLICES = 8
 
-function prepareData(raw: ChartData[]): { chartData: ChartData[]; others: ChartData[] } {
+function prepareData(raw: ChartData[], othersLabel: string): { chartData: ChartData[]; others: ChartData[] } {
   if (raw.length === 0) return { chartData: [], others: [] }
   const sorted = [...raw].sort((a, b) => b.value - a.value)
   if (sorted.length <= MAX_SLICES) return { chartData: sorted, others: [] }
   const top = sorted.slice(0, MAX_SLICES)
   const others = sorted.slice(MAX_SLICES)
   return {
-    chartData: [...top, { name: "Others", value: others.reduce((s, c) => s + c.value, 0), color: "#94a3b8" }],
+    chartData: [...top, { name: othersLabel, value: others.reduce((s, c) => s + c.value, 0), color: "#94a3b8" }],
     others,
   }
 }
@@ -76,7 +77,7 @@ function HBarView({ chartData, total }: { chartData: ChartData[]; total: number 
   )
 }
 
-function PieView({ chartData, others, total }: { chartData: ChartData[]; others: ChartData[]; total: number }) {
+function PieView({ chartData, others, total, othersLabel }: { chartData: ChartData[]; others: ChartData[]; total: number; othersLabel: string }) {
   return (
     <ResponsiveContainer width="100%" height={220}>
       <PieChart>
@@ -88,10 +89,10 @@ function PieView({ chartData, others, total }: { chartData: ChartData[]; others:
             if (!active || !payload?.length) return null
             const item = payload[0].payload as ChartData
             const pct = total > 0 ? Math.round((item.value / total) * 100) : 0
-            if (item.name === "Others" && others.length > 0) {
+            if (item.name === othersLabel && others.length > 0) {
               return (
                 <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3 shadow-lg text-xs min-w-[190px]">
-                  <p className="font-semibold text-gray-700 dark:text-gray-300 mb-2">Others ({pct}%) — {formatCurrency(item.value)}</p>
+                  <p className="font-semibold text-gray-700 dark:text-gray-300 mb-2">{othersLabel} ({pct}%) — {formatCurrency(item.value)}</p>
                   <div className="space-y-1">
                     {others.map((o) => (
                       <div key={o.name} className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
@@ -133,16 +134,17 @@ function PieView({ chartData, others, total }: { chartData: ChartData[]; others:
 
 export default function ExpenseChart({ data }: { data: ChartData[] }) {
   const [view, setView] = useState<"bar" | "pie">("bar")
-  const { chartData, others } = prepareData(data)
+  const { t } = useLanguage()
+  const { chartData, others } = prepareData(data, t.charts.othersLabel)
   const total = chartData.reduce((s, c) => s + c.value, 0)
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-6 h-full flex flex-col">
       <div className="flex items-center justify-between mb-4 flex-shrink-0">
-        <h2 className="text-base font-semibold text-gray-900 dark:text-white">Expenses by Category</h2>
+        <h2 className="text-base font-semibold text-gray-900 dark:text-white">{t.charts.expenseTitle}</h2>
         <button
           onClick={() => setView((v) => (v === "bar" ? "pie" : "bar"))}
-          title={view === "bar" ? "Switch to pie chart" : "Switch to bar chart"}
+          title={view === "bar" ? t.charts.switchToPie : t.charts.switchToBar}
           className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
         >
           {view === "bar" ? "🥧" : "📊"}
@@ -151,7 +153,7 @@ export default function ExpenseChart({ data }: { data: ChartData[] }) {
 
       {data.length === 0 ? (
         <div className="flex-1 flex items-center justify-center text-gray-400 text-sm">
-          No expenses this month
+          {t.charts.expenseEmpty}
         </div>
       ) : view === "bar" ? (
         <div className="flex-1 overflow-y-auto">
@@ -159,7 +161,7 @@ export default function ExpenseChart({ data }: { data: ChartData[] }) {
         </div>
       ) : (
         <div className="flex-1">
-          <PieView chartData={chartData} others={others} total={total} />
+          <PieView chartData={chartData} others={others} total={total} othersLabel={t.charts.othersLabel} />
         </div>
       )}
     </div>

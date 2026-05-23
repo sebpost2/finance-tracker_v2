@@ -6,6 +6,7 @@ import {
   PieChart, Pie, Tooltip, Legend, ResponsiveContainer,
 } from "recharts"
 import { formatCurrency } from "@/lib/utils"
+import { useLanguage } from "./LanguageProvider"
 
 export interface IncomeSource {
   id: string
@@ -107,13 +108,14 @@ function PieView({ sources, total }: { sources: IncomeSource[]; total: number })
 
 export default function IncomeSources({ sources }: { sources: IncomeSource[] }) {
   const [view, setView] = useState<"bar" | "pie">("bar")
+  const { t } = useLanguage()
 
   if (sources.length === 0) {
     return (
       <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm py-14 flex flex-col items-center gap-3 text-center px-6">
         <span className="text-5xl">💵</span>
-        <p className="font-medium text-gray-900 dark:text-white">No income this month</p>
-        <p className="text-sm text-gray-400 max-w-xs">Add income transactions to see your sources here.</p>
+        <p className="font-medium text-gray-900 dark:text-white">{t.charts.incomeEmpty}</p>
+        <p className="text-sm text-gray-400 max-w-xs">{t.charts.incomeEmptyHint}</p>
       </div>
     )
   }
@@ -123,11 +125,11 @@ export default function IncomeSources({ sources }: { sources: IncomeSource[] }) 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-6 h-full flex flex-col">
       <div className="flex items-center justify-between mb-5 flex-shrink-0">
-        <h2 className="text-base font-semibold text-gray-900 dark:text-white">Income by Source</h2>
+        <h2 className="text-base font-semibold text-gray-900 dark:text-white">{t.charts.incomeTitle}</h2>
         <div className="flex items-center gap-3">
           <button
             onClick={() => setView((v) => (v === "bar" ? "pie" : "bar"))}
-            title={view === "bar" ? "Switch to pie chart" : "Switch to bar chart"}
+            title={view === "bar" ? t.charts.switchToPie : t.charts.switchToBar}
             className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           >
             {view === "bar" ? "🥧" : "📊"}

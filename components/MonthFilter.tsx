@@ -1,11 +1,7 @@
 "use client"
 
 import { useRouter, useSearchParams } from "next/navigation"
-
-const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-]
+import { useLanguage } from "./LanguageProvider"
 
 function parseMonthParam(param: string): Date {
   const [year, month] = param.split("-").map(Number)
@@ -20,6 +16,7 @@ export default function MonthFilter() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const monthParam = searchParams.get("month")
+  const { t } = useLanguage()
 
   const now = new Date()
   const current = monthParam
@@ -38,17 +35,17 @@ export default function MonthFilter() {
       <button
         onClick={() => navigate(-1)}
         className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 transition-colors"
-        aria-label="Previous month"
+        aria-label={t.monthFilter.prev}
       >
         ←
       </button>
       <span className="text-sm font-medium text-gray-700 dark:text-gray-300 w-36 text-center tabular-nums">
-        {MONTHS[current.getMonth()]} {current.getFullYear()}
+        {t.monthFilter.months[current.getMonth()]} {current.getFullYear()}
       </span>
       <button
         onClick={() => navigate(1)}
         className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 transition-colors"
-        aria-label="Next month"
+        aria-label={t.monthFilter.next}
       >
         →
       </button>

@@ -1,19 +1,21 @@
 "use client"
 
 import { useRouter, useSearchParams } from "next/navigation"
+import { useLanguage } from "./LanguageProvider"
 
 type TxnType = "all" | "income" | "expense"
-
-const OPTIONS: { value: TxnType; label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "income", label: "Income" },
-  { value: "expense", label: "Expenses" },
-]
 
 export default function TypeFilter() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const current = (searchParams.get("type") ?? "all") as TxnType
+  const { t } = useLanguage()
+
+  const OPTIONS: { value: TxnType; label: string }[] = [
+    { value: "all", label: t.filters.typeAll },
+    { value: "income", label: t.filters.typeIncome },
+    { value: "expense", label: t.filters.typeExpense },
+  ]
 
   function setType(type: TxnType) {
     const params = new URLSearchParams(searchParams.toString())

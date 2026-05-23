@@ -12,8 +12,12 @@ import TransactionList from "@/components/TransactionList"
 import MonthFilter from "@/components/MonthFilter"
 import BudgetAlerts from "@/components/BudgetAlerts"
 import { getMonthRange } from "@/lib/utils"
+import { getDict } from "@/lib/i18n-server"
 
-export const metadata: Metadata = { title: "Dashboard | Finance Tracker" }
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getDict()
+  return { title: t.meta.dashboardTitle }
+}
 
 interface PageProps {
   searchParams: Promise<{ month?: string; trend?: string }>
@@ -21,6 +25,7 @@ interface PageProps {
 
 export default async function DashboardPage({ searchParams }: PageProps) {
   const { userId } = await verifySession()
+  const t = await getDict()
   const { month, trend = "6m" } = await searchParams
   const trendPeriod = (["1d","1w","1m","6m","1y","all"].includes(trend) ? trend : "6m") as TrendPeriod
   const { start, end } = getMonthRange(month)
@@ -103,7 +108,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   return (
     <div className="space-y-5">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t.dashboard.title}</h1>
         <Suspense><MonthFilter /></Suspense>
       </div>
 
@@ -130,11 +135,11 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         <div className="flex items-center justify-between px-1">
           {transactions.length > 5 && (
             <Link href="/dashboard/transactions" className="text-sm text-indigo-600 hover:text-indigo-700 font-medium">
-              View all {transactions.length} transactions →
+              {t.dashboard.viewAll(transactions.length)}
             </Link>
           )}
           <Link href="/dashboard/yearly" className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 ml-auto">
-            View yearly overview →
+            {t.dashboard.viewYearly}
           </Link>
         </div>
       </div>

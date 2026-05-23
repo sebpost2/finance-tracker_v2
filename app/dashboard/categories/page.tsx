@@ -5,8 +5,12 @@ import { prisma } from "@/lib/prisma"
 import CategoryList from "@/components/CategoryList"
 import CategoryViewToggle from "@/components/CategoryViewToggle"
 import { getMonthRange } from "@/lib/utils"
+import { getDict } from "@/lib/i18n-server"
 
-export const metadata: Metadata = { title: "Categories | Finance Tracker" }
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getDict()
+  return { title: t.meta.categoriesTitle }
+}
 
 interface PageProps {
   searchParams: Promise<{ view?: string }>
@@ -14,6 +18,7 @@ interface PageProps {
 
 export default async function CategoriesPage({ searchParams }: PageProps) {
   const { userId } = await verifySession()
+  const t = await getDict()
   const { view = "expense" } = await searchParams
   const { start } = getMonthRange()
 
@@ -51,7 +56,7 @@ export default async function CategoriesPage({ searchParams }: PageProps) {
   return (
     <div className="space-y-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Categories</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t.categories.title}</h1>
         <Suspense>
           <CategoryViewToggle view={view} />
         </Suspense>

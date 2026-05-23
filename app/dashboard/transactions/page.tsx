@@ -8,8 +8,12 @@ import SearchInput from "@/components/SearchInput"
 import ExportButton from "@/components/ExportButton"
 import TypeFilter from "@/components/TypeFilter"
 import { getMonthRange } from "@/lib/utils"
+import { getDict } from "@/lib/i18n-server"
 
-export const metadata: Metadata = { title: "Transactions | Finance Tracker" }
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getDict()
+  return { title: t.meta.transactionsTitle }
+}
 
 interface PageProps {
   searchParams: Promise<{ month?: string; q?: string; type?: string }>
@@ -17,6 +21,7 @@ interface PageProps {
 
 export default async function TransactionsPage({ searchParams }: PageProps) {
   const { userId } = await verifySession()
+  const t = await getDict()
   const { month, q, type } = await searchParams
   const { start, end } = getMonthRange(month)
 
@@ -47,7 +52,7 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Transactions</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t.transactions.title}</h1>
         <div className="flex items-center gap-2">
           <Suspense><ExportButton /></Suspense>
           <Suspense><MonthFilter /></Suspense>
