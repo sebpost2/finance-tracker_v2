@@ -14,7 +14,6 @@ export default function LoginPage() {
   return (
     <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-8">
       <div className="text-center mb-8">
-        <div className="text-4xl mb-3">💰</div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Finance Tracker</h1>
         <p className="text-gray-500 dark:text-gray-400 mt-1">{t.auth.loginSubtitle}</p>
       </div>
