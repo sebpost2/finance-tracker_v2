@@ -1,3 +1,4 @@
+import { cookies } from "next/headers"
 import { getUser } from "@/lib/dal"
 import { logout } from "@/app/actions/auth"
 import { getDict } from "@/lib/i18n-server"
@@ -8,6 +9,8 @@ import { LanguageToggle } from "./LanguageToggle"
 export default async function Navbar() {
   const user = await getUser()
   const t = await getDict()
+  const cookieStore = await cookies()
+  const isDark = (cookieStore.get("theme")?.value ?? "dark") === "dark"
 
   return (
     <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-40">
@@ -22,7 +25,7 @@ export default async function Navbar() {
           </div>
           <div className="flex items-center gap-2">
             <LanguageToggle />
-            <ThemeToggle />
+            <ThemeToggle initialDark={isDark} />
             <span className="text-sm text-gray-600 dark:text-gray-400 hidden sm:block px-2 truncate max-w-[120px]">
               {user?.name}
             </span>

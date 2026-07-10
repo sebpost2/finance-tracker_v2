@@ -25,7 +25,7 @@ export default function RegisterPage() {
             type="text"
             required
             className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-            placeholder="John Doe"
+            placeholder={t.auth.namePlaceholder}
           />
         </div>
         <div>
@@ -35,7 +35,7 @@ export default function RegisterPage() {
             type="email"
             required
             className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-            placeholder="you@example.com"
+            placeholder={t.auth.emailPlaceholder}
           />
         </div>
         <div>

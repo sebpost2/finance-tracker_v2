@@ -1,15 +1,11 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useLanguage } from "./LanguageProvider"
 
-export default function ThemeToggle() {
-  const [isDark, setIsDark] = useState(false)
+export default function ThemeToggle({ initialDark }: { initialDark: boolean }) {
+  const [isDark, setIsDark] = useState(initialDark)
   const { t } = useLanguage()
-
-  useEffect(() => {
-    setIsDark(document.documentElement.classList.contains("dark"))
-  }, [])
 
   function toggle() {
     const next = !isDark
