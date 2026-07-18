@@ -10,6 +10,12 @@ function revalidate() {
   revalidatePath("/dashboard/transactions")
 }
 
+async function assertOwnsCategory(categoryId: string | null | undefined, userId: string) {
+  if (!categoryId) return
+  const category = await prisma.category.findUnique({ where: { id: categoryId, userId } })
+  if (!category) throw new Error("Invalid category")
+}
+
 export async function createTransaction(formData: FormData) {
   const { userId } = await verifySession()
 
@@ -21,6 +27,7 @@ export async function createTransaction(formData: FormData) {
     date: formData.get("date"),
   })
   if (!result.success) throw new Error(result.error.issues[0].message)
+  await assertOwnsCategory(result.data.categoryId, userId)
 
   await prisma.transaction.create({ data: { ...result.data, userId } })
   revalidate()
@@ -37,6 +44,7 @@ export async function updateTransaction(id: string, formData: FormData) {
     date: formData.get("date"),
   })
   if (!result.success) throw new Error(result.error.issues[0].message)
+  await assertOwnsCategory(result.data.categoryId, userId)
 
   await prisma.transaction.update({ where: { id, userId }, data: result.data })
   revalidate()

@@ -2,20 +2,21 @@
 
 import { prisma } from "@/lib/prisma"
 import { createSession, deleteSession } from "@/lib/session"
-import { checkRateLimit, resetRateLimit } from "@/lib/rateLimit"
+import { checkRateLimit, resetRateLimit, getIp } from "@/lib/rateLimit"
 import { LoginSchema, SignupSchema } from "@/lib/schemas"
 import bcrypt from "bcryptjs"
-import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 
 type AuthState = { error?: string } | undefined
 
-async function getIp(): Promise<string> {
-  const h = await headers()
-  return h.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown"
-}
-
 export async function signup(state: AuthState, formData: FormData): Promise<AuthState> {
+  const ip = await getIp()
+  const { allowed, resetInMs } = checkRateLimit(`signup:${ip}`)
+  if (!allowed) {
+    const mins = Math.ceil(resetInMs / 60000)
+    return { error: `Too many signup attempts. Try again in ${mins} minute${mins === 1 ? "" : "s"}.` }
+  }
+
   const raw = {
     name: formData.get("name"),
     email: formData.get("email"),

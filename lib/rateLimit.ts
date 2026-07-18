@@ -1,6 +1,13 @@
 // In-memory rate limiter — works for single-instance deployments.
 // For multi-instance / serverless at scale, replace with @upstash/ratelimit + Redis.
 
+import { headers } from "next/headers"
+
+export async function getIp(): Promise<string> {
+  const h = await headers()
+  return h.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown"
+}
+
 interface Entry {
   count: number
   resetAt: number

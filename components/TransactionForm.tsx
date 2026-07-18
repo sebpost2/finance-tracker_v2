@@ -32,9 +32,14 @@ export default function TransactionForm({ categories, transaction, onClose }: Pr
     })
   }
 
-  const defaultDate = transaction
-    ? new Date(transaction.date).toISOString().split("T")[0]
-    : new Date().toISOString().split("T")[0]
+  function toLocalDateInput(date: Date): string {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, "0")
+    const day = String(date.getDate()).padStart(2, "0")
+    return `${year}-${month}-${day}`
+  }
+
+  const defaultDate = toLocalDateInput(transaction ? new Date(transaction.date) : new Date())
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">

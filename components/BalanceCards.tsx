@@ -23,12 +23,13 @@ function ChangeTag({
 }) {
   const { t } = useLanguage()
   if (previous === 0 || current === 0) return null
-  const pct = Math.round(((current - previous) / previous) * 100)
+  const diff = current - previous
+  const pct = Math.round((diff / Math.abs(previous)) * 100)
   if (pct === 0)
     return (
       <span className="text-xs text-gray-400">{t.balance.eqLastMonth}</span>
     )
-  const isUp = pct > 0
+  const isUp = diff > 0
   const isGood = lowerIsBetter ? !isUp : isUp
   return (
     <span
