@@ -6,7 +6,7 @@
 
 Aplicación full-stack de finanzas personales para registrar ingresos y gastos, visualizar el gasto por categoría y administrar presupuestos mensuales.
 
-**[Demo en vivo](https://finance-tracker-v2-sebpost2s-projects.vercel.app/login)** · [Reportar bug](https://github.com/sebpost2/finance-tracker_v2/issues)
+**[Demo en vivo](https://finance-tracker-v2-seven.vercel.app/login)** · [Reportar bug](https://github.com/sebpost2/finance-tracker_v2/issues)
 
 > Haz clic en **"Try demo"** en la pantalla de login — no necesitas cuenta.
 
